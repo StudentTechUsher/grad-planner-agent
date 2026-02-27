@@ -1,0 +1,23 @@
+services:
+  app:
+    image: ghcr.io/${GITHUB_USER}/grad-planner-agent:latest
+    container_name: grad-planner-agent
+    ports:
+      - "3008:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json:ro # Allows watchtower to use local docker login credentials for ghcr.io
+    command: --interval 30 --cleanup --label-enable
+    restart: unless-stopped
+    environment:
+      - REPO_USER=${WATCHTOWER_REPO_USER}
+      - REPO_PASS=${WATCHTOWER_REPO_PASS}
