@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseTranscriptPdf, parseTranscriptText } from '@/lib/transcriptParser';
 
+export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const isTextMode = req.nextUrl.searchParams.get('mode') === 'text';

@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
 
 // Load BYU institutional context once at module level
 let byuContext = '';
