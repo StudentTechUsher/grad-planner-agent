@@ -7,16 +7,19 @@ import path from 'path';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
-// Load BYU institutional context once at module level
-let byuContext = '';
-try {
-    const raw = await fs.readFile(path.join(process.cwd(), 'byu-context.json'), 'utf-8');
-    byuContext = '\n\nINSTITUTION CONTEXT (BYU-specific rules — follow these strictly):\n' + raw;
-} catch {
-    // File not found — continue without it
-}
+// Load BYU institutional context lazily
+let byuContext: string | null = null;
 
 export async function POST(req: Request) {
+    if (byuContext === null) {
+        try {
+            const raw = await fs.readFile(path.join(process.cwd(), 'byu-context.json'), 'utf-8');
+            byuContext = '\n\nINSTITUTION CONTEXT (BYU-specific rules — follow these strictly):\n' + raw;
+        } catch {
+            byuContext = ''; // File not found — continue without it
+        }
+    }
+
     const { messages } = await req.json();
     const coreMessages = await convertToModelMessages(messages);
 
