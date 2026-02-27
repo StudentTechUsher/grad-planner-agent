@@ -1,0 +1,203 @@
+{
+    "programRequirements": [
+        {
+            "description": "Teachings & Doctrine of the Book of Mormon",
+            "requirementId": 1,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "REL A 121",
+                    "title": "The Book of Mormon",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 122",
+                    "title": "The Book of Mormon",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 275",
+                    "title": "Tchgs & Doctrine of B of M",
+                    "credits": 2,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "Christ and the Everlasting Gospel",
+            "requirementId": 2,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "REL A 211",
+                    "title": "The New Testament",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 250",
+                    "title": "Christ & the Everlasting Gospel",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 310R",
+                    "title": "New Testament Jerusalem Center",
+                    "credits": 1,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 311R",
+                    "title": "New Testament Studies",
+                    "credits": 1.5,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "Foundations of the Restoration",
+            "requirementId": 3,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "REL C 225",
+                    "title": "Foundations of the Restoration",
+                    "credits": 2,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "The Eternal Family",
+            "requirementId": 4,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "REL C 200",
+                    "title": "The Eternal Family",
+                    "credits": 2,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "BYU Religion Hours",
+            "requirementId": 5,
+            "notes": "Complete 3 Credit Hours",
+            "courses": [
+                {
+                    "code": "HIST 205",
+                    "title": "Intro Fam Hist Doctr Prac",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 101",
+                    "title": "Old Testament Survey",
+                    "credits": 2,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "REL A 111",
+                    "title": "New Testament Survey",
+                    "credits": 2,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "BYU Foundations for Student Success",
+            "requirementId": 6,
+            "notes": "Complete during first semester",
+            "courses": [
+                {
+                    "code": "UNIV 101",
+                    "title": "BYU Foundations for Student Success",
+                    "credits": 2,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "The Individual and Society - American Heritage",
+            "requirementId": 7,
+            "subRequirements": [
+                {
+                    "requirementId": "7.1",
+                    "description": "Option 2.1 — Complete 1 Course",
+                    "courses": [
+                        {
+                            "code": "A HTG 100",
+                            "title": "American Heritage",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        },
+                        {
+                            "code": "HONRS 240",
+                            "title": "Am Government and Society",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        }
+                    ]
+                },
+                {
+                    "requirementId": "7.2",
+                    "description": "Option 2.2 — Complete 2 of 3 Options",
+                    "notes": "Includes ECON 110, POLI 110, HIST 220 variations"
+                }
+            ]
+        },
+        {
+            "description": "Skills - First-Year Writing",
+            "requirementId": 8,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "WRTG 150",
+                    "title": "Writing & Rhetoric",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "ELING 150",
+                    "title": "1st Yr Writing, International",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "PHIL 150",
+                    "title": "Reasoning & Writing",
+                    "credits": 3,
+                    "prerequisite": "none"
+                }
+            ]
+        },
+        {
+            "description": "Skills - Quantitative Reasoning",
+            "requirementId": 9,
+            "notes": "Complete 1 Course",
+            "courses": [
+                {
+                    "code": "MATH 110",
+                    "title": "College Algebra",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "MATH 112",
+                    "title": "Calculus 1",
+                    "credits": 4,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "STAT 121",
+                    "title": "Principles of Statistics",
+                    "credits": 3,
+                    "prerequisite": "none"
+                }
+            ]
+        }
+    ]
+}

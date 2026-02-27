@@ -1,0 +1,383 @@
+{
+    "programName": "Information Systems (BSIS)",
+    "max_credits_allowed": 64,
+    "min_credits_required": 64,
+    "programRequirements": [
+        {
+            "notes": "Prerequisite courses: These courses are used in determining admission to the undergraduate Information Systems program.",
+            "description": "Complete 2 Requirements",
+            "requirementId": 1,
+            "subRequirements": [
+                {
+                    "courses": [
+                        {
+                            "code": "ACC 200",
+                            "title": "Principles of Accounting",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        },
+                        {
+                            "code": "IS 201",
+                            "title": "Intro to Information Systems",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        }
+                    ],
+                    "description": "Complete 2 Courses",
+                    "requirementId": "1.1"
+                },
+                {
+                    "courses": [
+                        {
+                            "code": "C S 111",
+                            "title": "Intro to Computer Science",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        },
+                        {
+                            "code": "C S 142",
+                            "title": "Intro to Computer Programming",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        },
+                        {
+                            "code": "IS 303",
+                            "title": "Intro Computer Programming",
+                            "credits": 3,
+                            "prerequisite": "none"
+                        }
+                    ],
+                    "description": "Complete 1 of 3 Courses",
+                    "requirementId": "1.2"
+                }
+            ],
+            "otherRequirement": "Apply and be formally accepted into the program."
+        },
+        {
+            "notes": "It is strongly recommended that STAT 121 be completed before entering the IS core. It is strongly encouraged to have M COM 320 completed before the IS core.",
+            "courses": [
+                {
+                    "code": "ECON 110",
+                    "title": "Econ Principles & Problems",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "FIN 201",
+                    "title": "Principles of Finance",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 110",
+                    "title": "Spreadsheets & Bus Analysis",
+                    "credits": 1,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "M COM 320",
+                    "title": "Commun in Organiztnl Settings",
+                    "credits": 3
+                },
+                {
+                    "code": "MKTG 201",
+                    "title": "Marketing Management",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "STAT 121",
+                    "title": "Intro to Stat Data Analysis",
+                    "credits": 3,
+                    "prerequisite": "none"
+                }
+            ],
+            "description": "Complete 6 Courses",
+            "requirementId": 2
+        },
+        {
+            "description": "Complete 8 Courses",
+            "requirementId": 3,
+            "sequencingNotes": "Upper-division IS core is cohort-based: take the Fall block (IS 402, IS 403, IS 404, IS 415) followed by the Winter block (IS 401, IS 413, IS 414, IS 455). All require acceptance into the BSIS.",
+            "envelopes": [
+                {
+                    "envelopeId": "ISCORE-FALL",
+                    "name": "IS Core Fall Block",
+                    "description": "Cohort-based Fall block; all courses must be taken together before the Winter block.",
+                    "selectMode": "all-or-none",
+                    "termsOffered": [
+                        "Fall"
+                    ],
+                    "sequenceOrder": 1,
+                    "courseCodes": [
+                        "IS 402",
+                        "IS 403",
+                        "IS 404",
+                        "IS 415"
+                    ]
+                },
+                {
+                    "envelopeId": "ISCORE-WINTER",
+                    "name": "IS Core Winter Block",
+                    "description": "Cohort-based Winter block; all courses must be taken together after the Fall block.",
+                    "selectMode": "all-or-none",
+                    "termsOffered": [
+                        "Winter"
+                    ],
+                    "sequenceOrder": 2,
+                    "courseCodes": [
+                        "IS 401",
+                        "IS 413",
+                        "IS 414",
+                        "IS 455"
+                    ]
+                }
+            ],
+            "courses": [
+                {
+                    "code": "IS 401",
+                    "title": "Proj Management & Sys Design",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Winter"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 2,
+                    "envelopeId": "ISCORE-WINTER"
+                },
+                {
+                    "code": "IS 402",
+                    "title": "Database Systems",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Fall"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 1,
+                    "envelopeId": "ISCORE-FALL"
+                },
+                {
+                    "code": "IS 403",
+                    "title": "Prin of Business Programming",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Fall"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 1,
+                    "envelopeId": "ISCORE-FALL"
+                },
+                {
+                    "code": "IS 404",
+                    "title": "Data Communication",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Fall"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 1,
+                    "envelopeId": "ISCORE-FALL"
+                },
+                {
+                    "code": "IS 413",
+                    "title": "Enterprise Application Devel",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Winter"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 2,
+                    "envelopeId": "ISCORE-WINTER"
+                },
+                {
+                    "code": "IS 414",
+                    "title": "IS Security & Controls",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Winter"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 2,
+                    "envelopeId": "ISCORE-WINTER"
+                },
+                {
+                    "code": "IS 415",
+                    "title": "Exploratory Data Analysis",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Fall"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 1,
+                    "envelopeId": "ISCORE-FALL"
+                },
+                {
+                    "code": "IS 455",
+                    "title": "Machine Learning",
+                    "credits": 3,
+                    "prerequisite": "Acceptance into the BSIS",
+                    "termsOffered": [
+                        "Winter"
+                    ],
+                    "sequenceGroup": "IS Upper Division Core",
+                    "sequenceOrder": 2,
+                    "envelopeId": "ISCORE-WINTER"
+                }
+            ]
+        },
+        {
+            "courses": [
+                {
+                    "code": "IS 515",
+                    "title": "Adv Spreadsheets Bus Analysis",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 520",
+                    "title": "Spreadsheet Automation",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 531",
+                    "title": "Enterprise Infrastructure",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 533",
+                    "title": "Advanced Data Communications",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 537",
+                    "title": "Data Structures",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 542",
+                    "title": "Web Development",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 543",
+                    "title": "Mobile Platform Development",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 551",
+                    "title": "User Experience Design",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 555",
+                    "title": "Data Science for Organizations",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 560",
+                    "title": "Information Security Mngmnt",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 562",
+                    "title": "IS Project Management",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 565",
+                    "title": "Digital Forensics for Orgnztns",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 566",
+                    "title": "Advanced Database Management",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 571",
+                    "title": "Academic Research in I Sys",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 572",
+                    "title": "Structural Equation Modeling",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "IS 590R",
+                    "title": "Network Administration - You may take once",
+                    "credits": 3,
+                    "prerequisite": "none"
+                }
+            ],
+            "description": "Complete 1 of 16 Courses",
+            "requirementId": 4
+        },
+        {
+            "notes": "Business Core courses:",
+            "courses": [
+                {
+                    "code": "GSCM 201",
+                    "title": "Intro Global Supply Chain Mgt",
+                    "credits": 1.5,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "GSCM 211",
+                    "title": "Intro to GSCM International",
+                    "credits": 1.5,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "HRM 391",
+                    "title": "Organizational Effectiveness",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "MSB 390",
+                    "title": "Ethics for Management",
+                    "credits": 3,
+                    "prerequisite": "none"
+                },
+                {
+                    "code": "STRAT 392",
+                    "title": "Strategy and Economics",
+                    "credits": 3,
+                    "prerequisite": "none"
+                }
+            ],
+            "description": "Complete 5 Courses",
+            "requirementId": 5
+        },
+        {
+            "steps": [
+                "Obtain confirmation from your advisement center that you have completed the following:",
+                "Complete Marriott School exit survey online."
+            ],
+            "description": "Advisement Confirmation",
+            "requirementId": 6
+        }
+    ]
+}

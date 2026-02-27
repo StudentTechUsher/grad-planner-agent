@@ -1,0 +1,1783 @@
+[
+    {
+        "id": "f4b37280-b40e-4292-84f6-7b1ecee2cd75",
+        "term": "Fall Semester 2019",
+        "subject": "A HTG",
+        "number": "100",
+        "title": "American Heritage",
+        "credits": 3,
+        "grade": "B+",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "The Individual and Society - American Heritage"
+            }
+        ]
+    },
+    {
+        "id": "46e0b317-d447-4d61-af85-619573c588ce",
+        "term": "Fall Semester 2019",
+        "subject": "C S",
+        "number": "142",
+        "title": "Intro to Computer Programming",
+        "credits": 3,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 12 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "7.7.1",
+                "requirementType": null,
+                "requirementDescription": "Option 7.1 — Complete up to 6.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "7.7.2",
+                "requirementType": null,
+                "requirementDescription": "Option 7.2 — Complete up to 6.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            }
+        ]
+    },
+    {
+        "id": "053a6343-95e7-41fc-bf31-df50b90c10ee",
+        "term": "Fall Semester 2019",
+        "subject": "MATH",
+        "number": "110",
+        "title": "College Algebra",
+        "credits": 3,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "0e1160fa-f0dd-40f1-be1d-3aeeaa535251",
+        "term": "Fall Semester 2019",
+        "subject": "REL C",
+        "number": "130",
+        "title": "Missionary Preparation",
+        "credits": 2,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "Foundations of the Restoration"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "4",
+                "requirementType": "allOf",
+                "requirementDescription": "The Eternal Family"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.385Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "fecc6e9f-4a59-4c0c-beb9-0fff46488475",
+        "term": "Fall Semester 2019",
+        "subject": "STDEV",
+        "number": "109",
+        "title": "Effective Study & Learning",
+        "credits": 2,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "a3b7078a-e90e-4601-b9e4-cc1f14d728e6",
+        "term": "Fall Semester 2019",
+        "subject": "SWELL",
+        "number": "146",
+        "title": "Racquetball, Beginning",
+        "credits": 0.5,
+        "grade": "P",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "234d6b74-c1fb-4c0c-9238-77af3efa298f",
+        "term": "Fall Semester 2021",
+        "subject": "CELL",
+        "number": "120",
+        "title": "Science of Biology",
+        "credits": 3,
+        "grade": "A-",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "f1a1ff2d-3dee-48d4-ba8e-23672102d25d",
+        "term": "Fall Semester 2021",
+        "subject": "MATH",
+        "number": "112",
+        "title": "Calculus 1",
+        "credits": 4,
+        "grade": "B+",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.386Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.386Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.386Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.386Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "2f332d72-26f1-4b36-b44b-916c35ad8d2b",
+        "term": "Fall Semester 2021",
+        "subject": "ME EN",
+        "number": "191",
+        "title": "New Student Seminar",
+        "credits": 0.5,
+        "grade": "P",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            }
+        ]
+    },
+    {
+        "id": "dccc9ab6-2f58-4d63-8356-8fe9e692d459",
+        "term": "Fall Semester 2021",
+        "subject": "MUSIC",
+        "number": "113",
+        "title": "Beginning Piano Techniques 1",
+        "credits": 2,
+        "grade": "B-",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "8",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 1"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "9",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 2"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "10",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Arts"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "5",
+                "requirementType": null,
+                "requirementDescription": "Complete 6 hours"
+            }
+        ]
+    },
+    {
+        "id": "e47319dc-8c92-419d-a3d6-34daac8086b8",
+        "term": "Fall Semester 2021",
+        "subject": "PHSCS",
+        "number": "121",
+        "title": "Intro to Newtonian Mechanics",
+        "credits": 3,
+        "grade": "B+",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "Adv Written & Oral Communication"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "13",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Physical Science"
+            }
+        ]
+    },
+    {
+        "id": "7ec55c8b-cbba-461e-9611-52f51b434172",
+        "term": "Fall Semester 2021",
+        "subject": "REL A",
+        "number": "121",
+        "title": "The Book of Mormon",
+        "credits": 2,
+        "grade": "W",
+        "status": "withdrawn",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "1",
+                "requirementType": "allOf",
+                "requirementDescription": "Teachings & Doctrine of the Book of Mormon"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": "allOf",
+                "requirementDescription": "Christ and the Everlasting Gospel"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.387Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "9be41817-114d-4dbf-b73c-9ed6347c7676",
+        "term": "Winter Semester 2022",
+        "subject": "MATH",
+        "number": "113",
+        "title": "Calculus 2",
+        "credits": 4,
+        "grade": "C+",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "6de92ee0-a02a-49b7-8bbc-5178b800e102",
+        "term": "Winter Semester 2022",
+        "subject": "ME EN",
+        "number": "101",
+        "title": "Static Systems in Me En",
+        "credits": 3,
+        "grade": "C-",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.388Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            }
+        ]
+    },
+    {
+        "id": "2d87bfe4-5cff-4d73-9aa4-81d923e8c5d7",
+        "term": "Winter Semester 2022",
+        "subject": "MUSIC",
+        "number": "113",
+        "title": "Beginning Piano Techniques 1",
+        "credits": 2,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "8",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 1"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "9",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 2"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "10",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Arts"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "5",
+                "requirementType": null,
+                "requirementDescription": "Complete 6 hours"
+            }
+        ]
+    },
+    {
+        "id": "199a53fd-54ad-4463-903a-90ce099913c7",
+        "term": "Winter Semester 2022",
+        "subject": "MUSIC",
+        "number": "311R",
+        "title": "University Chorale",
+        "credits": 1,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "8",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 1"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "9",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 2"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "10",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Arts"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "5",
+                "requirementType": null,
+                "requirementDescription": "Complete 6 hours"
+            }
+        ]
+    },
+    {
+        "id": "e258c322-98d8-4550-9712-8bf6173a5214",
+        "term": "Winter Semester 2022",
+        "subject": "REL A",
+        "number": "121",
+        "title": "The Book of Mormon",
+        "credits": 2,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "1",
+                "requirementType": "allOf",
+                "requirementDescription": "Teachings & Doctrine of the Book of Mormon"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": "allOf",
+                "requirementDescription": "Christ and the Everlasting Gospel"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "36b83a09-1f7e-4ba8-8b81-97ba8478e8e2",
+        "term": "Winter Semester 2022",
+        "subject": "REL C",
+        "number": "200",
+        "title": "The Eternal Family",
+        "credits": 2,
+        "grade": "W",
+        "status": "withdrawn",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "Foundations of the Restoration"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "4",
+                "requirementType": "allOf",
+                "requirementDescription": "The Eternal Family"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.389Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "a691f729-c187-4038-8339-4cc64ec570e9",
+        "term": "Fall Semester 2022",
+        "subject": "EC EN",
+        "number": "191",
+        "title": "New Student Seminar",
+        "credits": 0.5,
+        "grade": "P",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "79e9dc85-142b-464d-9054-8008d819a440",
+        "term": "Fall Semester 2022",
+        "subject": "MATH",
+        "number": "112",
+        "title": "Calculus 1",
+        "credits": 4,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "a604ce3c-5744-444c-b1dd-17c2bc5ab231",
+        "term": "Fall Semester 2022",
+        "subject": "ME EN",
+        "number": "101",
+        "title": "Static Systems in Me En",
+        "credits": 3,
+        "grade": "B+",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            }
+        ]
+    },
+    {
+        "id": "197ed059-92d7-442b-94a5-6cae9b5881f2",
+        "term": "Fall Semester 2022",
+        "subject": "ME EN",
+        "number": "231",
+        "title": "Leadership in a Global Context",
+        "credits": 3,
+        "grade": "A-",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            }
+        ]
+    },
+    {
+        "id": "57076bb2-c0f7-4027-87f8-8a6a70619a05",
+        "term": "Fall Semester 2022",
+        "subject": "REL A",
+        "number": "122",
+        "title": "The Book of Mormon",
+        "credits": 2,
+        "grade": "A",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "1",
+                "requirementType": "allOf",
+                "requirementDescription": "Teachings & Doctrine of the Book of Mormon"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": "allOf",
+                "requirementDescription": "Christ and the Everlasting Gospel"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.390Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "049ad4c5-dff5-49aa-8893-7efa28930509",
+        "term": "Fall Semester 2022",
+        "subject": "SWELL",
+        "number": "103",
+        "title": "STRONG Nation",
+        "credits": 0.5,
+        "grade": "P",
+        "status": "completed",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "1c2f1096-a718-4c5a-b4b9-479ba88f2a53",
+        "term": "Winter Semester 2023",
+        "subject": "EC EN",
+        "number": "220",
+        "title": "Fund of Digital Systems",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "17acda8e-5a94-4c3c-b945-2c13523907f5",
+        "term": "Winter Semester 2023",
+        "subject": "MATH",
+        "number": "213",
+        "title": "Elementary Linear Algebra",
+        "credits": 2,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "2456e174-ac3d-4711-bf66-ce65b6204f92",
+        "term": "Winter Semester 2023",
+        "subject": "MATH",
+        "number": "215",
+        "title": "Computational Linear Algebra",
+        "credits": 1,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "6",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 of 7 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "1",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 Course"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "3",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "279",
+                "programName": "Mathematics (Minor)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 4 hours"
+            }
+        ]
+    },
+    {
+        "id": "d38e5b9a-cb70-41da-b1b8-29d0e3457254",
+        "term": "Winter Semester 2023",
+        "subject": "PHIL",
+        "number": "201",
+        "title": "History of Philosophy 1",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "4",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - First-Year Writing"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "Adv Written & Oral Communication"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "8",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 1"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "9",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Civilization 2"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "11",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Letters"
+            }
+        ]
+    },
+    {
+        "id": "4aa2be27-f5ca-483c-8df8-940dd4db896e",
+        "term": "Winter Semester 2023",
+        "subject": "PHSCS",
+        "number": "220",
+        "title": "Intro Electricity & Magnetism",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "Adv Written & Oral Communication"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "13",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Physical Science"
+            }
+        ]
+    },
+    {
+        "id": "5c02cc72-1785-4116-b6da-e534c922f4b4",
+        "term": "Winter Semester 2023",
+        "subject": "REL A",
+        "number": "250",
+        "title": "Christ & His Everlastng Gospel",
+        "credits": 2,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "1",
+                "requirementType": "allOf",
+                "requirementDescription": "Teachings & Doctrine of the Book of Mormon"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": "allOf",
+                "requirementDescription": "Christ and the Everlasting Gospel"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.391Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "ee708ea3-c967-412d-98e3-96efc73e570d",
+        "term": "Spring Term 2023",
+        "subject": "EC EN",
+        "number": "240",
+        "title": "Circuits",
+        "credits": 4,
+        "grade": "W",
+        "status": "withdrawn",
+        "origin": "parsed",
+        "fulfillsRequirements": []
+    },
+    {
+        "id": "e437a151-fe93-4787-ac79-c2f00aecf7de",
+        "term": "Fall Semester 2023",
+        "subject": "ACC",
+        "number": "200",
+        "title": "Principles of Accounting",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "fd1d35cc-24d9-42cc-8c69-2c6a64996fdb",
+        "term": "Fall Semester 2023",
+        "subject": "FIN",
+        "number": "201",
+        "title": "Principles of Finance",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "524f8830-ed36-4433-8b30-c64d755ee621",
+        "term": "Fall Semester 2023",
+        "subject": "IS",
+        "number": "110",
+        "title": "Spreadsheets & Bus Analysis",
+        "credits": 1,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "95b64d98-0fe6-4d56-8bab-15cd5738f3d9",
+        "term": "Fall Semester 2023",
+        "subject": "IS",
+        "number": "201",
+        "title": "Intro to Mgt Info Systems",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "3a5697a5-c663-4d53-8a3a-42215a2236b2",
+        "term": "Fall Semester 2023",
+        "subject": "REL C",
+        "number": "225",
+        "title": "Foundations of the Restoration",
+        "credits": 2,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "Foundations of the Restoration"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "4",
+                "requirementType": "allOf",
+                "requirementDescription": "The Eternal Family"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.392Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "b76f4e17-0184-471b-b2b6-984384877e14",
+        "term": "Winter Semester 2024",
+        "subject": "GSCM",
+        "number": "201",
+        "title": "Intro Global Supply Chain Mgt",
+        "credits": 1,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "484b03cc-03ab-4b09-9838-c26146c88754",
+        "term": "Winter Semester 2024",
+        "subject": "GSCM",
+        "number": "211",
+        "title": "Intro to GSCM International",
+        "credits": 1,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "11c52855-6477-4209-82e0-6473f1b9a72f",
+        "term": "Winter Semester 2024",
+        "subject": "ECON",
+        "number": "110",
+        "title": "Econ Principles & Problems",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "2",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - American Heritage"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "The Individual and Society - Global and Cultural Awareness"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "14",
+                "requirementType": "allOf",
+                "requirementDescription": "Arts, Letters and Sciences - Social Science"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "5",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            }
+        ]
+    },
+    {
+        "id": "ec2bc15e-fc29-43da-bc21-66b4cd4980cf",
+        "term": "Winter Semester 2024",
+        "subject": "IS",
+        "number": "303",
+        "title": "Intro Computer Programming",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "10",
+                "programName": "Entrepreneurship (Minor)",
+                "requirementId": "2",
+                "requirementType": null,
+                "requirementDescription": "Complete 3 hours"
+            }
+        ]
+    },
+    {
+        "id": "a30d7583-0558-4d99-9b5d-e4cc57cbc6c1",
+        "term": "Winter Semester 2024",
+        "subject": "REL C",
+        "number": "200",
+        "title": "The Eternal Family",
+        "credits": 2,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "3",
+                "requirementType": "allOf",
+                "requirementDescription": "Foundations of the Restoration"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "4",
+                "requirementType": "allOf",
+                "requirementDescription": "The Eternal Family"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "5",
+                "requirementType": "allOf",
+                "requirementDescription": "BYU Religion Hours"
+            }
+        ]
+    },
+    {
+        "id": "59c63687-bdd4-4cea-9c94-ebfa62cfd4a6",
+        "term": "Winter Semester 2024",
+        "subject": "STAT",
+        "number": "121",
+        "title": "Principles of Statistics",
+        "credits": 3,
+        "grade": null,
+        "status": "in-progress",
+        "origin": "parsed",
+        "fulfillsRequirements": [
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "6",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Quantitative Reasoning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "4",
+                "programName": "BYU Gen Ed & Religion (2024)",
+                "requirementId": "7",
+                "requirementType": "allOf",
+                "requirementDescription": "Skills - Languages of Learning"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "4",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 2 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "5",
+                "requirementType": null,
+                "requirementDescription": "Complete 1 of 3 Courses"
+            },
+            {
+                "matchType": "auto",
+                "matchedAt": "2026-02-25T17:54:52.393Z",
+                "programId": "50",
+                "programName": "Machine Learning (BS)",
+                "requirementId": "8",
+                "requirementType": null,
+                "requirementDescription": "Complete 9.0 hours"
+            }
+        ]
+    }
+]
