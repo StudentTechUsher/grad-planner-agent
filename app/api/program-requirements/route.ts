@@ -11,6 +11,7 @@ function toSlug(name: string): string {
         .replace(/^-+|-+$/g, '');
 }
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     const program = req.nextUrl.searchParams.get('program') ?? '';
     const type = req.nextUrl.searchParams.get('type') ?? 'major';

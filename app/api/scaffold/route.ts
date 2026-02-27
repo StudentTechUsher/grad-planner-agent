@@ -151,6 +151,7 @@ export async function POST(req: NextRequest) {
 }
 
 // ─── GET handler – retrieve current scaffold ─────────────────────────────
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     const planId = req.nextUrl.searchParams.get('planId');
 

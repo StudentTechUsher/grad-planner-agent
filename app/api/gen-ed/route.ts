@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
     const year = req.nextUrl.searchParams.get('year') ?? '2024';
     const file = year === 'pre-2024'
