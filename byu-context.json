@@ -1,0 +1,213 @@
+{
+    "institution": "Brigham Young University",
+    "lastUpdated": "2026-02-26",
+    "primaryIdentifiers": {
+        "schoolCode": "BYU",
+        "timezone": "America/Denver"
+    },
+    "terms": {
+        "Fall": {
+            "type": "semester",
+            "canonicalName": "Fall",
+            "length_weeks": 16,
+            "fte-credit-minimum": 12,
+            "fte-credit-maximum": 18,
+            "supports_8_week_within": true,
+            "notes": "Full-semester courses typically run 16 weeks. 8-week classes may start/finish mid-semester."
+        },
+        "Winter": {
+            "type": "semester",
+            "canonicalName": "Winter",
+            "length_weeks": 16,
+            "fte-credit-minimum": 12,
+            "fte-credit-maximum": 18,
+            "supports_8_week_within": true,
+            "notes": "Full-semester courses typically run 16 weeks. 8-week classes may start/finish mid-semester."
+        },
+        "Spring": {
+            "type": "term",
+            "canonicalName": "Spring",
+            "length_weeks": null,
+            "fte-credit-minimum": 6,
+            "fte-credit-maximum": 9,
+            "notes": "Shorter session; exact dates vary year-to-year. Consult registrar for calendar."
+        },
+        "Summer": {
+            "type": "term",
+            "canonicalName": "Summer",
+            "length_weeks": null,
+            "fte-credit-minimum": 6,
+            "fte-credit-maximum": 9,
+            "notes": "Multiple mini-sessions / blocks; exact start/end dates vary."
+        }
+    },
+    "religionRequirement": {
+        "required": true,
+        "tracking": "separate_requirement_block",
+        "description": "BYU requires religion credits for all students. Religion credits are tracked and evaluated separately from general electives and major/minor requirements.",
+        "commonCategories": [
+            "Teachings & Doctrine of the Book of Mormon",
+            "Christ and the Everlasting Gospel",
+            "BYU Religion Hours",
+            "Foundations of the Restoration",
+            "The Eternal Family"
+        ],
+        "rules": {
+            "counting": "Religion credits count toward overall earned credits but are also validated against religion-specific requirement blocks. Agent should present both earned-credit effect and religion-block fulfillment separately.",
+            "frequency": "Some programs may require a number of religion credits by graduation; others may require a minimum per time period—consult program metadata where available."
+        }
+    },
+    "grading": {
+        "letterGrades": [
+            "A",
+            "A-",
+            "B+",
+            "B",
+            "B-",
+            "C+",
+            "C",
+            "C-",
+            "D",
+            "F"
+        ],
+        "passTypes": [
+            "P",
+            "CR"
+        ],
+        "withdraw": "W",
+        "creditNoCredit": {
+            "allowed": true,
+            "interpretation": "P/CR counts as credit earned but typically does not carry grade points. Behavior may vary by program."
+        },
+        "gradePointRules": {
+            "note": "Use registrar or program mapping for exact GPA calculations. Pass/CR values should not be included in GPA by default unless program-specific rules override."
+        }
+    },
+    "credits": {
+        "allow_fractional": true,
+        "common_activity_values": [
+            0.25,
+            0.5,
+            1
+        ],
+        "unit": "credit_hours",
+        "notes": "Activity and wellness classes often have fractional credit amounts (0.25 or 0.5)."
+    },
+    "courseIdentifiers": {
+        "subjectCode": "String (e.g., MATH, REL A, IS, ME EN)",
+        "courseNumber": "String (numeric or alphanumeric, e.g., 112, 311R)",
+        "sectionOptional": true,
+        "examples": [
+            {
+                "subject": "MATH",
+                "number": "112"
+            },
+            {
+                "subject": "REL A",
+                "number": "121"
+            },
+            {
+                "subject": "IS",
+                "number": "402"
+            }
+        ]
+    },
+    "transcriptRules": {
+        "withdrawn": {
+            "displayOnTranscript": true,
+            "counts_toward_credit": false,
+            "notes": "W appears on transcript but does not count as earned credit."
+        },
+        "repeats": {
+            "policy_default": "Both attempts appear on transcript; programmatic replacement or highest-grade rules must be supplied by program metadata.",
+            "agentBehavior": "When evaluating degree progress, do not implicitly replace grades — consult program rule or registrar preference field."
+        },
+        "transferCredits": {
+            "allowed": true,
+            "notes": "Transfer credits may have different subject mappings and may need articulation data. Agent must call an articulation mapping service or use provided transfer mappings."
+        }
+    },
+    "requirementMatching": {
+        "fulfillsRequirementsField": {
+            "type": "array",
+            "eachItem": {
+                "matchType": "String (auto/manual)",
+                "matchedAt": "ISO8601 timestamp",
+                "programId": "String or numeric id",
+                "programName": "String",
+                "requirementId": "String",
+                "requirementType": "nullable string (e.g., allOf, anyOf) -- may be missing",
+                "requirementDescription": "String"
+            },
+            "notes": "A single course may match multiple program requirements; preserve all matched items and timestamps."
+        },
+        "matchingRules": {
+            "subjectNumberMatch": "primary rule: subject code + course number",
+            "creditThreshold": "match only if credits >= requirement's minimum unless explicitly allowed",
+            "optionBuckets": "support rules like 'Complete N of M' and 'Complete X hours' — keep requirementId and requirementDescription intact for downstream logic"
+        }
+    },
+    "edgeCases": [
+        "8-week classes overlap with full-semester classes (start/end mid-semester); careful with per-term progress metrics.",
+        "Activity classes (0.25 or 0.5 credits) and ensemble/music participation credits (1 credit or less).",
+        "Courses can fulfill multiple distinct requirement blocks simultaneously (e.g., gen-ed + major elective).",
+        "Religion hours are required for ALL students and should be surfaced prominently; they may also count toward total credits.",
+        "Pass/CR grading may affect prerequisites or program eligibility differently — check program rules.",
+        "Course numbers with suffixes (e.g., 311R) indicate special types; treat suffix as part of the number."
+    ],
+    "programmaticHints": {
+        "timestamps": "Prefer registrar-sourced ISO8601 timestamps (e.g., matchedAt) for ordering and staleness checks.",
+        "provenance": "Keep origin (parsed/manual/registrar) and surface origin when recommending actions.",
+        "freshness": "Store lastUpdated on config and prefer per-program lastUpdated metadata for program-specific rules.",
+        "validation": "Agent should validate each course object against sampleCourse.schema before using it for degree checks."
+    },
+    "sampleCourse": {
+        "schema": {
+            "id": "uuid string",
+            "term": "String (e.g., 'Fall Semester 2019')",
+            "subject": "String",
+            "number": "String",
+            "title": "String",
+            "credits": "Number",
+            "grade": "String or null",
+            "status": "String (completed|in-progress|withdrawn)",
+            "origin": "String (parsed|manual|registrar)",
+            "fulfillsRequirements": "Array of requirement-match objects (may be empty)"
+        },
+        "example": {
+            "id": "f4b37280-b40e-4292-84f6-7b1ecee2cd75",
+            "term": "Fall Semester 2019",
+            "subject": "A HTG",
+            "number": "100",
+            "title": "American Heritage",
+            "credits": 3,
+            "grade": "B+",
+            "status": "completed",
+            "origin": "parsed",
+            "fulfillsRequirements": [
+                {
+                    "matchType": "auto",
+                    "matchedAt": "2026-02-25T17:54:52.385Z",
+                    "programId": "4",
+                    "programName": "BYU Gen Ed & Religion (2024)",
+                    "requirementId": "2",
+                    "requirementType": null,
+                    "requirementDescription": "The Individual and Society - American Heritage"
+                }
+            ]
+        }
+    },
+    "jsonSchemaNotes": {
+        "purpose": "Not a full JSON Schema document, but a compact description of expected types/fields. For strict validation, produce a formal JSON Schema (I can generate if you want).",
+        "requiredFieldsForAgent": [
+            "id",
+            "term",
+            "subject",
+            "number",
+            "title",
+            "credits",
+            "status",
+            "origin"
+        ]
+    }
+}

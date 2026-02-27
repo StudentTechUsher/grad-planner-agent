@@ -1,0 +1,4327 @@
+{
+  "programRequirements": [
+    {
+      "description": "Teachings & Doctrine of the Book of Mormon",
+      "requirementId": 1,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "REL A 121",
+          "title": "The Book of Mormon",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        },
+        {
+          "code": "REL A 122",
+          "title": "The Book of Mormon",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 275",
+          "title": "Tchgs & Doctrine of B of M",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Christ and the Everlasting Gospel",
+      "requirementId": 2,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "REL A 211",
+          "title": "The New Testament",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        },
+        {
+          "code": "REL A 250",
+          "title": "Christ & the Everlstng Gospel",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        },
+        {
+          "code": "REL A 310R",
+          "title": "New Testament Jerusalem Center",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "1.0v - Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        },
+        {
+          "code": "REL A 311R",
+          "title": "New Testament Studies",
+          "credits": 1.5,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "You may take up to 3.0 credit hours",
+            "1.5v - Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "max_total_credits",
+              "value": 3
+            },
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Foundations of the Restoration",
+      "requirementId": 3,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "REL C 225",
+          "title": "Foundations of the Restoration",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "The Eternal Family",
+      "requirementId": 4,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "REL C 200",
+          "title": "The Eternal Family",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill BYU Religion Hours"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "BYU Religion Hours"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "BYU Religion Hours",
+      "requirementId": 5,
+      "description_rule": "Complete 3 hours",
+      "courses": [
+        {
+          "code": "HIST 205",
+          "title": "Intro Fam Hist Doctr Prac",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL 101R",
+          "title": "Religion Waiver",
+          "credits": {
+            "min": 1,
+            "max": 14
+          },
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "You may take up to 14.0 credit hours"
+          ],
+          "constraints": [
+            {
+              "kind": "max_total_credits",
+              "value": 14
+            }
+          ]
+        },
+        {
+          "code": "REL 102R",
+          "title": "Religion Waiver",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL 103R",
+          "title": "Religion Waiver",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL 104R",
+          "title": "Religion Waiver",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 101",
+          "title": "Old Testament Survey",
+          "credits": null,
+          "prerequisite": "none",
+          "status": "retired",
+          "notes": [
+            "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+          ]
+        },
+        {
+          "code": "REL A 111",
+          "title": "New Testament Survey",
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 121",
+          "title": "The Book of Mormon",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Tchgs & Doctrine of Book of Mormon"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Tchgs & Doctrine of Book of Mormon"
+            }
+          ]
+        },
+        {
+          "code": "REL A 122",
+          "title": "The Book of Mormon",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 211",
+          "title": "The New Testament",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Christ and the Everlasting Gospel"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Christ and the Everlasting Gospel"
+            }
+          ]
+        },
+        {
+          "code": "REL A 212",
+          "title": "The New Testament",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 250",
+          "title": "Christ & the Everlstng Gospel",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Christ and the Everlasting Gospel"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Christ and the Everlasting Gospel"
+            }
+          ]
+        },
+        {
+          "code": "REL A 275",
+          "title": "Tchgs & Doctrine of B of M",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Tchgs & Doctrine of Book of Mormon"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Tchgs & Doctrine of Book of Mormon"
+            }
+          ]
+        },
+        {
+          "code": "REL A 303R",
+          "title": "Old Testament Studies",
+          "credits": 1.5,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "REL A 310R",
+          "title": "New Testament Jerusalem Center",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "1.0v - Might also fulfill Christ and the Everlasting Gospel"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Christ and the Everlasting Gospel"
+            }
+          ]
+        },
+        {
+          "code": "REL A 311R",
+          "title": "New Testament Studies",
+          "credits": 1.5,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "1.5v - Might also fulfill Christ and the Everlasting Gospel"
+          ],
+          "constraints": [
+            {
+              "kind": "max_total_credits",
+              "value": 3
+            },
+            {
+              "kind": "also_fulfills",
+              "area": "Christ and the Everlasting Gospel"
+            }
+          ]
+        },
+        {
+          "code": "REL C 200",
+          "title": "The Eternal Family",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill The Eternal Family"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "The Eternal Family"
+            }
+          ]
+        },
+        {
+          "code": "REL C 225",
+          "title": "Foundations of the Restoration",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Foundations of the Restoration"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Foundations of the Restoration"
+            }
+          ]
+        },
+        {
+          "code": "REL C 293R",
+          "title": "Slavic Family History",
+          "credits": {
+            "min": 1,
+            "max": 14
+          },
+          "prerequisite": "none",
+          "status": "retired",
+          "notes": [
+            "You may take up to 14.0 credit hours",
+            "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+          ],
+          "constraints": [
+            {
+              "kind": "max_total_credits",
+              "value": 14
+            }
+          ]
+        },
+        {
+          "code": "REL C 333",
+          "title": "The Living Prophets",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill The Eternal Family"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "The Eternal Family"
+            }
+          ]
+        },
+        {
+          "code": "REL C 351",
+          "title": "World Religions",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Global and Cultural Awareness"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Global and Cultural Awareness"
+            }
+          ]
+        },
+        {
+          "code": "REL C 352",
+          "title": "Survey of Christianity",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Global and Cultural Awareness"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Global and Cultural Awareness"
+            }
+          ]
+        },
+        {
+          "code": "REL C 357",
+          "title": "Survey of Judaism and Islam",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Global and Cultural Awareness"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Global and Cultural Awareness"
+            }
+          ]
+        },
+        {
+          "code": "REL C 358",
+          "title": "Survey of Eastern Religions",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "Might also fulfill Global and Cultural Awareness"
+          ],
+          "constraints": [
+            {
+              "kind": "also_fulfills",
+              "area": "Global and Cultural Awareness"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "BYU Foundations for Student Success",
+      "requirementId": 1,
+      "description_rule": "Complete 1 courses",
+      "notes": [
+        "Complete during the first semester"
+      ],
+      "courses": [
+        {
+          "code": "UNIV 101",
+          "title": "BYU Foundations for Student Success",
+          "credits": 2,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "The Individual and Society - American Heritage",
+      "requirementId": 2,
+      "description_rule": "Complete 1 of 7 options",
+      "subRequirements": [
+        {
+          "requirementId": "2.Option_21",
+          "description": "Complete 1 of 2 courses",
+          "courses": [
+            {
+              "code": "A HTG 100",
+              "title": "American Heritage",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "HONRS 240",
+              "title": "Am Government and Society",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "2.Option_22",
+          "description": "Complete 2 of 3 options",
+          "subRequirements": [
+            {
+              "requirementId": "2.Option_22.Option_221",
+              "description": "Complete 1 of 2 courses",
+              "courses": [
+                {
+                  "code": "ECON 110",
+                  "title": "Econ Principles & Problems",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active",
+                  "notes": [
+                    "Might also fulfill Social Science"
+                  ],
+                  "constraints": [
+                    {
+                      "kind": "also_fulfills",
+                      "area": "Social Science"
+                    }
+                  ]
+                },
+                {
+                  "code": "G E 112",
+                  "title": "Economic Principles & Problems",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                }
+              ]
+            },
+            {
+              "requirementId": "2.Option_22.Option_222",
+              "description": "Complete 1 of 2 courses",
+              "courses": [
+                {
+                  "code": "G E 220",
+                  "title": "U S History",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "HIST 220",
+                  "title": "U S Through 1877",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                }
+              ]
+            },
+            {
+              "requirementId": "2.Option_22.Option_223",
+              "description": "Complete 1 of 3 courses",
+              "courses": [
+                {
+                  "code": "G E 114",
+                  "title": "Am Government & Politics",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "POLI 110",
+                  "title": "Amer Government & Politics",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active",
+                  "notes": [
+                    "Might also fulfill Social Science"
+                  ],
+                  "constraints": [
+                    {
+                      "kind": "also_fulfills",
+                      "area": "Social Science"
+                    }
+                  ]
+                },
+                {
+                  "code": "POLI 210",
+                  "title": "Principles of Amer. Politics",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active",
+                  "notes": [
+                    "Might also fulfill Social Science"
+                  ],
+                  "constraints": [
+                    {
+                      "kind": "also_fulfills",
+                      "area": "Social Science"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "2.Option_23",
+          "description": "Complete 2 courses"
+        },
+        {
+          "requirementId": "2.Option_24",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "HIST 221",
+              "title": "U S Since 1877",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": null,
+              "title": "Amer Government & Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "2.Option_25",
+          "description": "Complete 2 courses"
+        },
+        {
+          "requirementId": "2.Option_26",
+          "description": "Complete 2 courses",
+          "notes": [
+            "This option is for transfer students and includes an additional class not available for registration."
+          ]
+        }
+      ]
+    },
+    {
+      "description": "The Individual and Society - Global and Cultural Awareness",
+      "requirementId": 3,
+      "description_rule": "Complete 1 of 6 options",
+      "notes": [
+        "International students may fulfill the Global and Cultural Awareness requirement through any of the American Heritage options. The student is responsible to see that is posted to the progress report through their college advisement center."
+      ],
+      "subRequirements": [
+        {
+          "requirementId": "3.Option_31",
+          "description": "Complete 1 courses",
+          "courses": [
+            {
+              "code": "ANTHR 101",
+              "title": "Social/Cultural Anthropology",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "ANTHR 110",
+              "title": "Intro to Archaeology",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1981 and Summer 2018",
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1981-Fall",
+                  "end_term": "2018-Summer"
+                }
+              ]
+            },
+            {
+              "code": "ANTHR 317",
+              "title": "Native Peoples of North Amer",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "ANTHR 326",
+              "title": "Guatemalan Society & Culture",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken 2017 Fall or later."
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                }
+              ]
+            },
+            {
+              "code": "ANTHR 330",
+              "title": "Peoples of Africa",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2020 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2020-Fall"
+                }
+              ]
+            },
+            {
+              "code": "ANTHR 335",
+              "title": "Peoples of India",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ANTHR 340",
+              "title": "Peoples of the Middle East",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ANTHR 343",
+              "title": "Chinese Culture & Society",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2015 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2015-Fall"
+                }
+              ]
+            },
+            {
+              "code": "ARTHC 203",
+              "title": "Asian Art Survey",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Spring 2014 or later",
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2014-Spring"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "CCE 102",
+              "title": "Sustainable Infrastructure",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken before Fall 2024"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_before_term",
+                  "end_term": "2024-Fall"
+                }
+              ]
+            },
+            {
+              "code": "CCE 231",
+              "title": "Global Leadership",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "ECON 230",
+              "title": "Econ Development & Growth",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2017 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                }
+              ]
+            },
+            {
+              "code": "ENG T 231",
+              "title": "Foundations Global Leadership",
+              "credits": null,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken 2019 Fall or later."
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2019-Fall"
+                }
+              ]
+            },
+            {
+              "code": "EUROP 200",
+              "title": "Intro to European Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2006 and Summer 2015",
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2006-Fall",
+                  "end_term": "2015-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "EUROP 336R",
+              "title": "Soc Sciences: European Context",
+              "credits": 0.5,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "EXDM 300",
+              "title": "Creating a Good Life",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2012 and Summer 2018"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2012-Fall",
+                  "end_term": "2018-Summer"
+                }
+              ]
+            },
+            {
+              "code": "G E 140",
+              "title": "GE Global & Cultural Awareness",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 120",
+              "title": "Geography & World Affairs",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 130",
+              "title": "Intro to Human Geography",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 255",
+              "title": "Middle & South America",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 260",
+              "title": "Europe",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Winter 1949 and Summer 2016"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1949-Winter",
+                  "end_term": "2016-Summer"
+                }
+              ]
+            },
+            {
+              "code": "GEOG 265",
+              "title": "Russia & Former Soviet Union",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 271",
+              "title": "Middle East",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 272",
+              "title": "East Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 273",
+              "title": "Southeast Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GEOG 285",
+              "title": "Africa South of the Sahara",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GERM 217",
+              "title": "German & Scandinavian Cinema",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "GWS 222",
+              "title": "Intro Global Women's Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1995 and Summer 2013"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1995-Fall",
+                  "end_term": "2013-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 202",
+              "title": "World Civilization from 1500",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Civilization 2"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Civilization 2"
+                }
+              ]
+            },
+            {
+              "code": "HIST 231",
+              "title": "Intro to East Asian History",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1963 and Summer 2014"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1963-Fall",
+                  "end_term": "2014-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 251",
+              "title": "Con & Col Lat Amer",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1940 and Fall 2019"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1940-Fall",
+                  "end_term": "2019-Fall"
+                }
+              ]
+            },
+            {
+              "code": "HIST 261",
+              "title": "Modern Africa",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2011 and Summer 2016"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2011-Fall",
+                  "end_term": "2016-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 293",
+              "title": "WW II in History & Memory",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2002 and Summer 2014"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2002-Fall",
+                  "end_term": "2014-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 304",
+              "title": "European Expansion",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2002 and Summer 2013",
+                "You cannot use here if taken Fall 2017 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2002-Fall",
+                  "end_term": "2013-Summer"
+                },
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                }
+              ]
+            },
+            {
+              "code": "HIST 333",
+              "title": "Hist Ottoman Empire",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2017 and Summer 2018"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2017-Fall",
+                  "end_term": "2018-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 355",
+              "title": "History of Argentina",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2000 and Summer 2017"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2000-Fall",
+                  "end_term": "2017-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 366",
+              "title": "Slavery in Africa & Atlantic",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2012 and Summer 2017"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2012-Fall",
+                  "end_term": "2017-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HIST 386",
+              "title": "Am Indian Hist to 1877",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "HIST 387",
+              "title": "Am Indian Hist 1877-present",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "HONRS 202",
+              "title": "Civilization 2: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "HONRS 208R",
+              "title": "Letters: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 209R",
+              "title": "Arts: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 213",
+              "title": "Civilization 2: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "HONRS 225",
+              "title": "Unexpect Connect: Phys-Culture",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Physical Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Physical Science"
+                }
+              ]
+            },
+            {
+              "code": "HONRS 231R",
+              "title": "GCA in Social Sciences",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 232R",
+              "title": "GCA in History",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 247R",
+              "title": "Natural Sciences: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 261",
+              "title": "Soc Sci Prin & Reas: Global & Cultr",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "HONRS 308R",
+              "title": "Letters: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 309R",
+              "title": "Arts: Global & Cultural",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 331R",
+              "title": "GCA in Social Sciences",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 332R",
+              "title": "GCA in History",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "HONRS 347R",
+              "title": "GCA in Sci, Math, Tech",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "IAS 221",
+              "title": "Intro to Africana Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2015 and Summer 2016"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2015-Fall",
+                  "end_term": "2016-Summer"
+                }
+              ]
+            },
+            {
+              "code": "IAS 353R",
+              "title": "Intercultural Outreach Prep",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once",
+                "You cannot use here if taken between Fall 2008 and Summer 2011"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                },
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2008-Fall",
+                  "end_term": "2011-Summer"
+                }
+              ]
+            },
+            {
+              "code": "IHUM 240",
+              "title": "Intro to Humanities of Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "IHUM 241",
+              "title": "Humanities of East Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2017 and Summer 2018",
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2017-Fall",
+                  "end_term": "2018-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "IHUM 242",
+              "title": "Intro to Humanities of Islam",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "IHUM 243",
+              "title": "Humanities of South Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "IHUM 244",
+              "title": "Humanities of Africa",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "IHUM 260",
+              "title": "Humanities of Latin America",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "JAPAN 350",
+              "title": "Lit in Tran: 8th-16th Century",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "JAPAN 351",
+              "title": "Lit in Tran: 17th-19th Century",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "JAPAN 352",
+              "title": "Lit in Translation: Modern Era",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "KOREA 340",
+              "title": "Korean Literature to 1900",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "ME EN 231",
+              "title": "Leadership in a Global Context",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "MESA 250",
+              "title": "Intro to Religion of Islam",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "MUSIC 203",
+              "title": "World Music Cultures",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            },
+            {
+              "code": "MUSIC 206",
+              "title": "Survey of Latin American Music",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "MUSIC 307",
+              "title": "World Music",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "POLI 150",
+              "title": "Comparative Governmnt&Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "POLI 170",
+              "title": "Intro International Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "POLI 347",
+              "title": "Russia/Former Soviet Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "POLI 353",
+              "title": "China: Government & Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "POLI 354",
+              "title": "Japan: Government & Politics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "POLI 385",
+              "title": "Intrntl Relations of Asia",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "POLI 472",
+              "title": "Intrnl Political Econ of Women",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PWS 101",
+              "title": "Cult Hist of Medicinal Plants",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PWS 150",
+              "title": "Environmental Biology",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1997 and Spring 2010",
+                "Might also fulfill Biological Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1997-Fall",
+                  "end_term": "2010-Spring"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Biological Science"
+                }
+              ]
+            },
+            {
+              "code": "REL C 351",
+              "title": "World Religions",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill BYU Religion Hours"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "BYU Religion Hours"
+                }
+              ]
+            },
+            {
+              "code": "REL C 352",
+              "title": "Survey of Christianity",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1929 and Summer 2015",
+                "Might also fulfill BYU Religion Hours"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1929-Fall",
+                  "end_term": "2015-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "BYU Religion Hours"
+                }
+              ]
+            },
+            {
+              "code": "REL C 357",
+              "title": "Survey of Judaism and Islam",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill BYU Religion Hours"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "BYU Religion Hours"
+                }
+              ]
+            },
+            {
+              "code": "REL C 358",
+              "title": "Survey of Eastern Religions",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Spring 2013 and Summer 2015",
+                "Might also fulfill BYU Religion Hours"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2013-Spring",
+                  "end_term": "2015-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "BYU Religion Hours"
+                }
+              ]
+            },
+            {
+              "code": "SCAND 217",
+              "title": "German & Scandinavian Cinema",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "SOC 113",
+              "title": "Multicultural America",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "SOC 222",
+              "title": "Intro Global Women's Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "SOC 323",
+              "title": "Sociology of Race & Ethnicity",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "TECH 231",
+              "title": "Foundations Global Leadership",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Social Science"
+                }
+              ]
+            },
+            {
+              "code": "UNIV 210R",
+              "title": "Topics: Global & Cltrl Awareness",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "3.Option_32",
+          "description": "Complete 1 courses",
+          "courses": [
+            {
+              "code": "AFRIK 202",
+              "title": "2nd Year Afrikaans",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "AFRIK 330",
+              "title": "Adv Lang & Cult: Afrikaans",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "AKAN 202",
+              "title": "Second-Year Akan",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "AKAN 330",
+              "title": "Adv Lang & Cult: Akan",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "ARAB 202",
+              "title": "Intermediate Arabic",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "ARMEN 202",
+              "title": "Second-Year Armenian",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "ASL 202",
+              "title": "Second-Year ASL 2",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "CHIN 202",
+              "title": "Intermediate Mandarin",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "CHIN 301",
+              "title": "Advanced Mandarin",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "FREN 202",
+              "title": "Intermediate French, Part 2",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "FREN 340",
+              "title": "Intro to Literary Analysis",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2015 or later",
+                "Might also fulfill Languages of Learning or Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2015-Fall"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning or Letters"
+                }
+              ]
+            },
+            {
+              "code": "GERM 202",
+              "title": "2nd-Year German",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "GERM 301",
+              "title": "Intermediate German",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken before 2023 Summer",
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_before_term",
+                  "end_term": "2023-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "ITAL 202",
+              "title": "Intermediate Italian 2",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "JAPAN 202",
+              "title": "Second-Year Japanese",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "JAPAN 301",
+              "title": "Japanese Reading & Culture",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "KOREA 202",
+              "title": "Second-Year Korean 2",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "KOREA 301",
+              "title": "Third-Year Korean 1",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "NORWE 202",
+              "title": "2nd-Year Norwegian",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "NORWE 330",
+              "title": "Advanced Norwegian",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken before Fall 2024"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_before_term",
+                  "end_term": "2024-Fall"
+                }
+              ]
+            },
+            {
+              "code": "PORT 202",
+              "title": "Port Reading & Comprehension",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2019 or later",
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2019-Fall"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "RUSS 202",
+              "title": "2nd Year Russian Part 2",
+              "credits": 5,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "SPAN 205",
+              "title": "University Spanish 3",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2017 or later",
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "SPAN 321",
+              "title": "3rd-Yr Span Read, Gram, & Cult",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2017 or later",
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "VIET 202",
+              "title": "Second-Year Vietnamese",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            },
+            {
+              "code": "VIET 330",
+              "title": "Adv Lang & Cult: Vietnamese",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "3.Option_33",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "IAS 360R",
+              "title": "International Field Study Prep",
+              "credits": 0.5,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once",
+                "You cannot use here if taken between Fall 1999 and Summer 2007",
+                "Might also fulfill Adv Written & Oral Communication"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                },
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1999-Fall",
+                  "end_term": "2007-Summer"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Adv Written & Oral Communication"
+                }
+              ]
+            },
+            {
+              "code": "IAS 361",
+              "title": "Post-Field Analysis & Writing",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "3.Option_34",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "NES 347R",
+              "title": "Arab & Islamic Civilization",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "NES 349R",
+              "title": "Jewish Civilization",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "3.Option_35",
+          "description": "Complete 2 of 4 courses",
+          "notes": [
+            "Courses not currently offered."
+          ],
+          "courses": [
+            {
+              "code": "REL C 355",
+              "title": "Judaism & the Gospel",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "REL C 355",
+              "title": "Honrs Judaism & the Gospel",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "REL C 356",
+              "title": "Islam & the Gospel",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "REL C 356",
+              "title": "Honrs Islam & the Gospel",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "3.Option_36",
+          "description": "Complete 1 of 12 courses",
+          "courses": [
+            {
+              "code": "ARTHC 498",
+              "title": "Senior Thesis/Capstone Exper",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ARTHC 499R",
+              "title": "Honors Thesis",
+              "credits": 0.5,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "CPSE 480",
+              "title": "Ed & Multicult Issues in Sp Ed",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ECE 433",
+              "title": "Tchng Literacy Pre K-3",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "EL ED 357",
+              "title": "Tchg Reading & Language Arts",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "EL ED 443",
+              "title": "Tchg Literacy in Grades 3-6",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Letters"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Letters"
+                }
+              ]
+            },
+            {
+              "code": "NURS 402",
+              "title": "Clin Prac Glbl Hlth & Hum Div",
+              "credits": 2.5,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "NURS 403",
+              "title": "Global and Population Hlth Nsg",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2020 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2020-Fall"
+                }
+              ]
+            },
+            {
+              "code": "NURS 404",
+              "title": "Cl Prac Glob & Pop Hlth Nurs",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2013 and Summer 2020"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2013-Fall",
+                  "end_term": "2020-Summer"
+                }
+              ]
+            },
+            {
+              "code": "PETE 377",
+              "title": "Secondary Practicum",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Biological Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Biological Science"
+                }
+              ]
+            },
+            {
+              "code": "POLI 300",
+              "title": "Statistical Analysis",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Languages of Learning or Social Science"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Languages of Learning or Social Science"
+                }
+              ]
+            },
+            {
+              "code": "SC ED 353",
+              "title": "Multi Cult Ed for Sc Ed",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Skills - First-Year Writing",
+      "requirementId": 4,
+      "description_rule": "Complete 1 of 5 courses",
+      "courses": [
+        {
+          "code": "ELING 150",
+          "title": "1st Yr Writing, International",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 115",
+          "title": "College Writing & Reading",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "retired",
+          "notes": [
+            "You cannot use here if taken 2017 Fall or later",
+            "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+          ],
+          "constraints": [
+            {
+              "kind": "not_usable_if_taken_on_or_after",
+              "start": "2017-08-01"
+            }
+          ]
+        },
+        {
+          "code": "HONRS 150",
+          "title": "Honors University Writing",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "retired",
+          "notes": [
+            "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+          ]
+        },
+        {
+          "code": "PHIL 150",
+          "title": "Reasoning & Writing",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active",
+          "notes": [
+            "You cannot use here if taken Spring 2014 or later"
+          ],
+          "constraints": [
+            {
+              "kind": "not_usable_if_taken_on_or_after",
+              "start": "2014-04-01"
+            }
+          ]
+        },
+        {
+          "code": "WRTG 150",
+          "title": "Writing & Rhetoric",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Adv Written & Oral Communication",
+      "requirementId": 5,
+      "description_rule": "Complete 1 of 11 options",
+      "subRequirements": [
+        {
+          "requirementId": "5.Option_51",
+          "description": "Complete 1 courses",
+          "courses": [
+            {
+              "code": "ANTHR 499",
+              "title": "Senior Thesis",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "BIO 316",
+              "title": "Scientific Communication",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "CE 471",
+              "title": "Civil Engineering Practice",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Before Fall 2024"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_before_term",
+                  "end_term": "2024-Fall"
+                }
+              ]
+            },
+            {
+              "code": "CHEM 391",
+              "title": "Tech Writing Using Chem Lit",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "DANCE 317",
+              "title": "Adv Writing for Dance",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ENGL 303",
+              "title": "Writing Literary Criticism",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ENGL 310",
+              "title": "Honrs Writing and Tutoring",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "ENGL 314",
+              "title": "Writing About Literature",
+              "credits": null,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken 2017 Fall or later."
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2017-Fall"
+                }
+              ]
+            },
+            {
+              "code": "EXDM 422",
+              "title": "Experience Needfinding",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken Fall 2013 or later"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2013-Fall"
+                }
+              ]
+            },
+            {
+              "code": "G E 301",
+              "title": "Advanced Writing",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "GERM 340",
+              "title": "Writing About Literature",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 1986 and Summer 2002"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1986-Fall",
+                  "end_term": "2002-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HONRS 300R",
+              "title": "Advanced Writing",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "You may take once",
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "IHUM 311",
+              "title": "Adv Wrtg in Comp Arts & Hum",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "M COM 320",
+              "title": "Commun in Organiztnl Settings",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "NEURO 316",
+              "title": "Neuroscience Advanced Writing",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2014 and Summer 2018"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2014-Fall",
+                  "end_term": "2018-Summer"
+                }
+              ]
+            },
+            {
+              "code": "PHIL 300",
+              "title": "Philosophical Writing",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PHSCS 416",
+              "title": "Writing in Physics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2006 and Summer 2013"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2006-Fall",
+                  "end_term": "2013-Summer"
+                }
+              ]
+            },
+            {
+              "code": "PSYCH 307",
+              "title": "Writing Within Psychology",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PWS 480",
+              "title": "Environmental Capstone",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PWS 316",
+              "title": "Readings in Biotechnology",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "SFL 315",
+              "title": "Effective Writing & Presenting",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 310",
+              "title": "Writing and Tutoring",
+              "credits": null,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 311",
+              "title": "Writing abt Art & Humanities",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 312",
+              "title": "Persuasive Writing",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 313",
+              "title": "Expository Writing for El Ed",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 315",
+              "title": "Writing in the Social Sciences",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "WRTG 316",
+              "title": "Technical Communication",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_52",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "AM ST 304",
+              "title": "Methods and Writing Practices",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "AM ST 490",
+              "title": "Senior Capstone",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "Might also fulfill Arts"
+              ],
+              "constraints": [
+                {
+                  "kind": "also_fulfills",
+                  "area": "Arts"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_53",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "HIST 200",
+              "title": "Historian's Craft",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "HIST 490",
+              "title": "Capstone Research Seminar",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_54",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "HONRS 320",
+              "title": "Great Questions Tutorial",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between 2014 Fall and 2023 Summer"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2014-Fall",
+                  "end_term": "2023-Summer"
+                }
+              ]
+            },
+            {
+              "code": "HONRS 499R",
+              "title": "Honors Thesis",
+              "credits": 0.5,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once",
+                "You cannot use here if taken between 1971 Fall and 2023 Summer"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                },
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1971-Fall",
+                  "end_term": "2023-Summer"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_55",
+          "description": "Option 5.5",
+          "subRequirements": [
+            {
+              "requirementId": "5.Option_55.Requirement_551",
+              "description": "Complete 1 courses",
+              "courses": [
+                {
+                  "code": "POLI 200",
+                  "title": "Political Inquiry",
+                  "credits": 4,
+                  "prerequisite": "none",
+                  "status": "active"
+                }
+              ]
+            },
+            {
+              "requirementId": "5.Option_55.Requirement_552",
+              "description": "Complete 1 of 5 courses",
+              "courses": [
+                {
+                  "code": "POLI 360",
+                  "title": "Research Proj Political Theory",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "POLI 310",
+                  "title": "Research Proj: Amer Politics",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "POLI 330",
+                  "title": "Research Proj: Public Policy",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "POLI 350",
+                  "title": "Research Proj: Comp Politics",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                },
+                {
+                  "code": "POLI 370",
+                  "title": "Resrch Proj: Intrnl Relations",
+                  "credits": 3,
+                  "prerequisite": "none",
+                  "status": "active"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_56",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "ENGL 295",
+              "title": "Writing Literary Criticism",
+              "credits": null,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "ENGL 495",
+              "title": "Senior Capstone",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_57",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "NURS 320",
+              "title": "EBP & Informatics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Spring 1984 and Summer 2006"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1984-Spring",
+                  "end_term": "2006-Summer"
+                }
+              ]
+            },
+            {
+              "code": "NURS 339",
+              "title": "Ethics in Nursing",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_58",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "HIST 200",
+              "title": "Historian's Craft",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Winter 1934 and Summer 2017"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1934-Winter",
+                  "end_term": "2017-Summer"
+                }
+              ]
+            },
+            {
+              "code": "MESA 495",
+              "title": "Sr Sem in Middle East Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You cannot use here if taken between Fall 2002 and Summer 2017"
+              ],
+              "constraints": [
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "2002-Fall",
+                  "end_term": "2017-Summer"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_59",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "MESA 495",
+              "title": "Sr Sem in Middle East Studies",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_510",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "PHSCS 416A",
+              "title": "Writing in Physics 1",
+              "credits": 1,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            },
+            {
+              "code": "PHSCS 416B",
+              "title": "Writing in Physics 2",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_511",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "IAS 360R",
+              "title": "International Field Study Prep",
+              "credits": 0.5,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once",
+                "You cannot use here if taken between Fall 1999 and Summer 2007",
+                "You cannot use here if taken Fall 2015 or later",
+                "Might also fulfill Global and Cultural Awareness"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                },
+                {
+                  "kind": "not_usable_if_taken_between_terms",
+                  "start_term": "1999-Fall",
+                  "end_term": "2007-Summer"
+                },
+                {
+                  "kind": "not_usable_if_taken_on_or_after_term",
+                  "start_term": "2015-Fall"
+                },
+                {
+                  "kind": "also_fulfills",
+                  "area": "Global and Cultural Awareness"
+                }
+              ]
+            },
+            {
+              "code": "IAS 361",
+              "title": "Post-Field Analysis & Writing",
+              "credits": 2,
+              "prerequisite": "none",
+              "status": "retired",
+              "notes": [
+                "This course is no longer available for registration and will count only if you completed it while it was offered. Please see your college advisement center for possible substitutions."
+              ]
+            }
+          ]
+        },
+        {
+          "requirementId": "5.Option_512",
+          "description": "Complete 2 courses",
+          "courses": [
+            {
+              "code": "SOC 455R",
+              "title": "Senior Capstone Part 1",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "code": "SOC 456R",
+              "title": "Senior Capstone Part 2",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active",
+              "notes": [
+                "You may take once"
+              ],
+              "constraints": [
+                {
+                  "kind": "max_attempts",
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Skills - Quantitative Reasoning",
+      "requirementId": 6,
+      "description_rule": "Complete 1 courses",
+      "notes": [
+        "Also fulfillable by ACT math â‰¥ 22 or SAT math â‰¥ 540."
+      ],
+      "courses": [
+        {
+          "code": "MATH 102",
+          "title": "Quantitative Reasoning",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MATH 110",
+          "title": "College Algebra",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MATH 112",
+          "title": "Calculus 1",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MATH 113",
+          "title": "Calculus 2",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MATH 118",
+          "title": "Finite Mathematics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MATH 119",
+          "title": "Introduction to Calculus",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "STAT 105",
+          "title": "Introduction to Statistics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "STAT 121",
+          "title": "Principles of Statistics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 205",
+          "title": "Intro to Logic/Crit Thinking",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ACC 200",
+          "title": "Principles of Accounting",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PSYCH 308",
+          "title": "Psychological Statistics",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Skills - Languages of Learning",
+      "requirementId": 7,
+      "description_rule": "Complete 1 of 2 options",
+      "subRequirements": [
+        {
+          "requirementId": "7.Option_71",
+          "description": "Complete 1 courses",
+          "courses": [
+            {
+              "code": "MATH 112",
+              "title": "Calculus 1",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "MATH 113",
+              "title": "Calculus 2",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "MATH 118",
+              "title": "Finite Mathematics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "MATH 119",
+              "title": "Introduction to Calculus",
+              "credits": 4,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "STAT 121",
+              "title": "Principles of Statistics",
+              "credits": 3,
+              "prerequisite": "none",
+              "status": "active"
+            },
+            {
+              "code": "PHIL 305",
+              "title": null,
+              "credits": null,
+              "prerequisite": "none",
+              "status": "active"
+            }
+          ]
+        },
+        {
+          "requirementId": "7.Option_72",
+          "description": "Complete 1 courses",
+          "notes": [
+            "Includes many 202-level and 300-level language courses (AFRIK 202/330, AKAN 202/330, ARAB 202, ARMEN 202, ASL 202, CHIN 202/301, FREN 202/340, GERM 202/301, ITAL 202, JAPAN 202/301, KOREA 202/301, NORWE 202/330, PORT 202, RUSS 202, SPAN 205/321, VIET 202/330, etc.).",
+            "See language courses under Global and Cultural Awareness that have 'also_fulfills Languages of Learning'."
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Civilization 1",
+      "requirementId": 8,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "ARTHC 201",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HIST 201",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 201",
+          "title": "Western Humanities 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 201",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 211",
+          "title": "Civilization: World Lit 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 201",
+          "title": "Masterpieces of World Lit 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 211",
+          "title": "Rhetoric & Civilization 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 201",
+          "title": "Civilization: Music 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 201",
+          "title": "History of Philosophy 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 210",
+          "title": "Science & Civilization 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "POLI 201",
+          "title": "Western Political Heritage 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "TMA 201",
+          "title": "Drama Perf: Antiq to Renais",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 201",
+          "title": "Classical Tradition 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Civilization 2",
+      "requirementId": 9,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "ARTHC 202",
+          "title": "World Civilization Since 1500",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HIST 202",
+          "title": "World Civilization from 1500",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 202",
+          "title": "Western Humanities 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 202",
+          "title": "Civilization: Literature 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 212",
+          "title": "Civilization: World Lit 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 202",
+          "title": "Masterpieces of World Lit 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 212",
+          "title": "Rhetoric & Civilization 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 202",
+          "title": "Civilization: Music 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 202",
+          "title": "History of Philosophy 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 211",
+          "title": "Science & Civilization 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "POLI 202",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "TMA 202",
+          "title": "Drama Perf: Renais to Present",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 202",
+          "title": "Classical Tradition 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Arts",
+      "requirementId": 10,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "ART 101",
+          "title": "Introduction to Drawing",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ART 104",
+          "title": "Beginning Painting",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ART 105",
+          "title": "Art/Design Found Studio",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ARTHC 111",
+          "title": "Art History Survey 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "DANCE 260",
+          "title": "Movement Fundamentals",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 101",
+          "title": "Introduction to Music",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 202",
+          "title": "Civilization: Music 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 203",
+          "title": "World Music Cultures",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MUSIC 204",
+          "title": "Music in Western Civilization",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "TMA 102",
+          "title": "Intro to Theatre",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "TMA 115",
+          "title": "Film as Art and Communication",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "TMA 202",
+          "title": "Drama Perf: Renais to Present",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 101",
+          "title": "Effective Thinking",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 241",
+          "title": "Humanities of East Asia",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 243",
+          "title": "Humanities of South Asia",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 244",
+          "title": "Humanities of Africa",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Letters",
+      "requirementId": 11,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "CL CV 110",
+          "title": "Intro to Classical Civilization",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 202",
+          "title": "Classical Tradition 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 241",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 245",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CL CV 246",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 202",
+          "title": "Civilization: Literature 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CMLIT 212",
+          "title": "Civilization: World Lit 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 202",
+          "title": "Masterpieces of World Lit 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 212",
+          "title": "Rhetoric & Civilization 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 230",
+          "title": "American Literature 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 232",
+          "title": "American Literature 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 235",
+          "title": "British Literary History 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ENGL 236",
+          "title": "British Literary History 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 110",
+          "title": null,
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 202",
+          "title": "History of Philosophy 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 211",
+          "title": "Science & Civilization 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHIL 213",
+          "title": "Philosophy & Literature",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 202",
+          "title": "Western Humanities 2",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 242",
+          "title": "Intro to Humanities of Islam",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 260",
+          "title": "Humanities of Latin America",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 261",
+          "title": "Humanities of Latin America",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "IHUM 262",
+          "title": "Humanities of Islam",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Biological Science",
+      "requirementId": 12,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "BIO 100",
+          "title": "Principles of Biology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "BIO 130",
+          "title": "Intro to Human Anatomy",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MMBIO 121",
+          "title": "General Microbiology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "MMBIO 221",
+          "title": "General Microbiology Lab",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "NDFS 100",
+          "title": "Essentials of Human Nutrition",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PWS 100",
+          "title": "Environmental Science",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PWS 150",
+          "title": "Environmental Biology",
+          "credits": null,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PWS 168",
+          "title": "Plant Biology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HONRS 220",
+          "title": "Social Science Reasoning",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HONRS 221",
+          "title": "Social Science Inquiry",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Physical Science",
+      "requirementId": 13,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "PHY S 100",
+          "title": "Physical Science",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HONRS 223",
+          "title": "Unexpect Connect: Biol Lit",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "HONRS 225",
+          "title": "Unexpect Connect: Phys-Culture",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CHEM 101",
+          "title": "Intro to Chemistry",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CHEM 102",
+          "title": "Intro to Organic and Biochemistry",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CHEM 105",
+          "title": "General College Chemistry 1",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "CHEM 111",
+          "title": "Principles of Chemistry 1",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 101",
+          "title": "Elementary Physics 1",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 105",
+          "title": "General Physics 1",
+          "credits": 4,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 121",
+          "title": "Mechanics and Wave Motion",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 127",
+          "title": "Physics Lab-Introduction",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 137",
+          "title": "Physics Lab-Mechanics",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PHSCS 167",
+          "title": "Physics Lab-E&M",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 100",
+          "title": "Intro to Geology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 101",
+          "title": "Dynamic Earth",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 102",
+          "title": "History of Earth",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 103",
+          "title": "Geology Lab",
+          "credits": 1,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 105",
+          "title": "Earth Science",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 107",
+          "title": "Oceanography",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "GEOL 109",
+          "title": "Meteorology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "description": "Arts, Letters and Sciences - Social Science",
+      "requirementId": 14,
+      "description_rule": "Complete 1 courses",
+      "courses": [
+        {
+          "code": "ANTHR 101",
+          "title": "Social/Cultural Anthropology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ANTHR 110",
+          "title": "Intro to Archaeology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "ECON 110",
+          "title": "Econ Principles & Problems",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "EXSC 221",
+          "title": "Human Anatomy",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "PSYCH 111",
+          "title": "General Psychology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "SOC 111",
+          "title": "Intro to Sociology",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "SOC 112",
+          "title": "Social Problems",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "POLI 110",
+          "title": "Amer Government & Politics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "POLI 150",
+          "title": "Comparative Governmnt&Politics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "POLI 170",
+          "title": "Intro International Politics",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "SFL 160",
+          "title": "Human Development",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "SFL 200",
+          "title": "Marriage Enhancement",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        },
+        {
+          "code": "SFL 210",
+          "title": "Human Development",
+          "credits": 3,
+          "prerequisite": "none",
+          "status": "active"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,521 @@
+{
+    "plan": [
+        {
+            "term": "Spring Term 2023",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Spring Term 2023",
+                    "credits": 3,
+                    "title": "Principles of Accounting",
+                    "code": "ACC 200"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Spring Term 2023",
+                    "credits": 1,
+                    "title": "Spreadsheets & Bus Analysis",
+                    "code": "IS 110"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Spring Term 2023",
+                    "credits": 3,
+                    "title": "Intro to Mgt Info Systems",
+                    "code": "IS 201"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "P",
+                    "term": "Spring Term 2023",
+                    "credits": 1,
+                    "title": "Startup Bootcamp",
+                    "code": "ENT 113"
+                }
+            ],
+            "credits_planned": 8
+        },
+        {
+            "term": "Fall Semester 2023",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "B-",
+                    "term": "Fall Semester 2023",
+                    "credits": 3,
+                    "title": "Econ Principles & Problems",
+                    "code": "ECON 110"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "P",
+                    "term": "Fall Semester 2023",
+                    "credits": 1,
+                    "title": "Career Development",
+                    "code": "ENT 326"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2023",
+                    "credits": 3,
+                    "title": "Entrepreneurial Innovation",
+                    "code": "ENT 401"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2023",
+                    "credits": 3,
+                    "title": "Entrepreneurship Analytics",
+                    "code": "ENT 402"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2023",
+                    "credits": 3,
+                    "title": "Intro Business Analytics",
+                    "code": "MSB 325"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2023",
+                    "credits": 2,
+                    "title": "The Living Prophets",
+                    "code": "REL C 333"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2023",
+                    "credits": 3,
+                    "title": "Introduction to Film",
+                    "code": "TMA 102"
+                }
+            ],
+            "credits_planned": 18
+        },
+        {
+            "term": "Winter Semester 2024",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A-",
+                    "term": "Winter Semester 2024",
+                    "credits": 1.5,
+                    "title": "Intro to GSCM International",
+                    "code": "GSCM 211"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "P",
+                    "term": "Winter Semester 2024",
+                    "credits": 0.5,
+                    "title": "Snowboarding",
+                    "code": "SWELL 162"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2024",
+                    "credits": 1.5,
+                    "title": "Intro Global Supply Chain Mgt",
+                    "code": "GSCM 201"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2024",
+                    "credits": 3,
+                    "title": "Creating New Ventures",
+                    "code": "ENT 411"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A-",
+                    "term": "Winter Semester 2024",
+                    "credits": 3,
+                    "title": "Experiential Entrepreneurship",
+                    "code": "ENT 436"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2024",
+                    "credits": 3,
+                    "title": "Principles of Finance",
+                    "code": "FIN 201"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2024",
+                    "credits": 2,
+                    "title": "Foundations of the Restoration",
+                    "code": "REL C 225"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2024",
+                    "credits": 3,
+                    "title": "Principles of Statistics",
+                    "code": "STAT 121"
+                }
+            ],
+            "credits_planned": 17
+        },
+        {
+            "term": "Fall Semester 2024",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A-",
+                    "term": "Fall Semester 2024",
+                    "credits": 3,
+                    "title": "Entrep Sales & Persuasion",
+                    "code": "ENT 323"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2024",
+                    "credits": 3,
+                    "title": "Topics in Entrepreneurship",
+                    "code": "ENT 490R"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2024",
+                    "credits": 3,
+                    "title": "Western Humanities 1",
+                    "code": "IHUM 201"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A-",
+                    "term": "Fall Semester 2024",
+                    "credits": 3,
+                    "title": "Management Communication",
+                    "code": "M COM 320"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Fall Semester 2024",
+                    "credits": 2,
+                    "title": "The Eternal Family",
+                    "code": "REL C 200"
+                }
+            ],
+            "credits_planned": 14
+        },
+        {
+            "term": "Winter Semester 2025",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2025",
+                    "credits": 3,
+                    "title": "Legal Issues in Entrep",
+                    "code": "ENT 302"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2025",
+                    "credits": 1,
+                    "title": "Tech Entrep Lecture Series",
+                    "code": "ENT 382"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2025",
+                    "credits": 3,
+                    "title": "Topics in Entrepreneurship",
+                    "code": "ENT 490R"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "B+",
+                    "term": "Winter Semester 2025",
+                    "credits": 3,
+                    "title": "Ethics for Management",
+                    "code": "MSB 390"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "A",
+                    "term": "Winter Semester 2025",
+                    "credits": 2,
+                    "title": "Christ & His Everlastng Gospel",
+                    "code": "REL A 250"
+                }
+            ],
+            "credits_planned": 12
+        },
+        {
+            "term": "Fall Semester 2025",
+            "courses": [
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "In Progress",
+                    "term": "Fall Semester 2025",
+                    "credits": 3,
+                    "title": "Entrepreneurial Innovation",
+                    "code": "ENT 401"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "In Progress",
+                    "term": "Fall Semester 2025",
+                    "credits": 3,
+                    "title": "Venture Capital for Startups",
+                    "code": "ENT 425"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "In Progress",
+                    "term": "Fall Semester 2025",
+                    "credits": 3,
+                    "title": "New Venture LaunchPad",
+                    "code": "ENT 434R"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "In Progress",
+                    "term": "Fall Semester 2025",
+                    "credits": 0.5,
+                    "title": "SW PM Lecture Series",
+                    "code": "ENT 445R"
+                },
+                {
+                    "source": "Institutional",
+                    "status": "Completed",
+                    "grade": "In Progress",
+                    "term": "Fall Semester 2025",
+                    "credits": 3,
+                    "title": "Product Management",
+                    "code": "MSB 341"
+                }
+            ],
+            "credits_planned": 12.5
+        },
+        {
+            "term": "Winter Semester 2026",
+            "notes": "Start IS core and remaining first-year gen ed requirements.",
+            "courses": [
+                {
+                    "code": "IS 401",
+                    "title": "Proj Management & Sys Design",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 402",
+                    "title": "Database Systems",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "UNIV 101",
+                    "title": "BYU Foundations for Student Success",
+                    "credits": 2,
+                    "fulfills": [
+                        "BYU Foundations for Student Success"
+                    ]
+                },
+                {
+                    "code": "WRTG 150",
+                    "title": "Writing & Rhetoric",
+                    "credits": 3,
+                    "fulfills": [
+                        "Skills - First-Year Writing"
+                    ]
+                },
+                {
+                    "code": "HIST 205",
+                    "title": "Intro Fam Hist Doctr Prac",
+                    "credits": 2,
+                    "fulfills": [
+                        "BYU Religion Hours"
+                    ]
+                }
+            ],
+            "credits_planned": 13,
+            "is_active": true
+        },
+        {
+            "term": "Fall Semester 2026",
+            "notes": "Continue IS core and complete remaining civilization/religion gen eds.",
+            "courses": [
+                {
+                    "code": "IS 403",
+                    "title": "Prin of Business Programming",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 404",
+                    "title": "Data Communication",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 413",
+                    "title": "Enterprise Application Devel",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "REL A 211",
+                    "title": "The New Testament",
+                    "credits": 2,
+                    "fulfills": [
+                        "BYU Religion Hours"
+                    ]
+                },
+                {
+                    "code": "PHIL 202",
+                    "title": "History of Philosophy 2",
+                    "credits": 3,
+                    "fulfills": [
+                        "Arts, Letters and Sciences - Civilization 2"
+                    ]
+                }
+            ],
+            "credits_planned": 14
+        },
+        {
+            "term": "Winter Semester 2027",
+            "notes": "Finish IS core and the IS elective requirement.",
+            "courses": [
+                {
+                    "code": "IS 414",
+                    "title": "IS Security & Controls",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 415",
+                    "title": "Exploratory Data Analysis",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 455",
+                    "title": "Machine Learning",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-3"
+                    ]
+                },
+                {
+                    "code": "IS 515",
+                    "title": "Adv Spreadsheets Bus Analysis",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-4"
+                    ]
+                }
+            ],
+            "credits_planned": 12
+        },
+        {
+            "term": "Fall Semester 2027",
+            "notes": "Complete program support courses and remaining gen ed letters requirement. Fill final credits with electives as needed.",
+            "courses": [
+                {
+                    "code": "HRM 391",
+                    "title": "Organizational Effectiveness",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-5"
+                    ]
+                },
+                {
+                    "code": "STRAT 392",
+                    "title": "Strategy and Economics",
+                    "credits": 3,
+                    "fulfills": [
+                        "[Information Systems (BSIS)] requirement-5"
+                    ]
+                },
+                {
+                    "code": "IHUM 202",
+                    "title": "Western Humanities 2",
+                    "credits": 3,
+                    "fulfills": [
+                        "Arts, Letters and Sciences - Letters"
+                    ]
+                }
+            ],
+            "credits_planned": 12
+        },
+        {
+            "id": "milestone-apply-for-graduation-1766545120136-0",
+            "type": "Apply for Graduation",
+            "title": "Apply for Graduation",
+            "afterTerm": "Winter Semester 2027"
+        }
+    ],
+    "est_grad_sem": "Fall",
+    "est_grad_date": "2027-12-15",
+    "requestAdvisorReview": false,
+    "transcript_present": true
+}
