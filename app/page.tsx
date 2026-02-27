@@ -105,7 +105,7 @@ export default function Home() {
     <div className="flex h-screen w-full bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 selection:bg-zinc-300 dark:selection:bg-zinc-700">
 
       {/* LEFT COLUMN: CHAT */}
-      <div className="flex w-full lg:w-3/5 flex-col border-r border-zinc-200 dark:border-zinc-800 relative z-10 transition-all">
+      <div className={`flex w-full ${process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' ? 'lg:w-3/5' : ''} flex-col border-r border-zinc-200 dark:border-zinc-800 relative z-10 transition-all`}>
         {/* Header */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-6 bg-white dark:bg-black z-10">
           <div className="flex items-center gap-3">
@@ -283,67 +283,69 @@ export default function Home() {
       </div>
 
       {/* RIGHT COLUMN: JSON VIEWER & TOOL LOGS SIDEBAR */}
-      <div className="hidden lg:flex w-2/5 flex-col bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800">
+      {process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' && (
+        <div className="hidden lg:flex w-2/5 flex-col bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800">
 
-        {/* Top Half: JSON Plan */}
-        <div className="flex-1 flex flex-col min-h-[50%] border-b border-zinc-200 dark:border-zinc-800">
-          <header className="flex h-16 shrink-0 items-center px-6 bg-white dark:bg-black z-10 border-b border-zinc-200 dark:border-zinc-800">
-            <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-500">Live JSON Plan Viewer</h2>
-          </header>
-          <div className="flex-1 overflow-y-auto p-6 font-mono text-xs leading-relaxed bg-zinc-50 dark:bg-zinc-950">
-            {liveJson ? (
-              <pre className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto text-zinc-800 dark:text-zinc-300">
-                {JSON.stringify(liveJson, null, 2)}
-              </pre>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-400 space-y-4">
-                <div className="w-16 h-16 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl opacity-50">{'{ }'}</span>
+          {/* Top Half: JSON Plan */}
+          <div className="flex-1 flex flex-col min-h-[50%] border-b border-zinc-200 dark:border-zinc-800">
+            <header className="flex h-16 shrink-0 items-center px-6 bg-white dark:bg-black z-10 border-b border-zinc-200 dark:border-zinc-800">
+              <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-500">Live JSON Plan Viewer</h2>
+            </header>
+            <div className="flex-1 overflow-y-auto p-6 font-mono text-xs leading-relaxed bg-zinc-50 dark:bg-zinc-950">
+              {liveJson ? (
+                <pre className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto text-zinc-800 dark:text-zinc-300">
+                  {JSON.stringify(liveJson, null, 2)}
+                </pre>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-zinc-400 space-y-4">
+                  <div className="w-16 h-16 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl opacity-50">{'{ }'}</span>
+                  </div>
+                  <p>Grad plan scaffold not generated yet.</p>
                 </div>
-                <p>Grad plan scaffold not generated yet.</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Half: Tool Execution Log */}
-        <div className="flex-1 flex flex-col min-h-[50%] bg-zinc-100 dark:bg-black/50">
-          <header className="flex h-12 shrink-0 items-center px-6 bg-zinc-200/50 dark:bg-zinc-900 z-10 border-b border-zinc-200 dark:border-zinc-800">
-            <div className="flex items-center gap-2 text-zinc-500">
-              <Bot size={14} />
-              <h2 className="text-xs font-semibold tracking-wider uppercase">Agent Tool Execution Log</h2>
+              )}
             </div>
-          </header>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.flatMap((m: any) =>
-              ((m.toolInvocations) || (m.parts?.filter((p: any) => p.type.startsWith('tool-') || p.type === 'tool-call').map((p: any) => ({
-                toolCallId: p.toolCallId,
-                toolName: p.toolName || p.type.replace('tool-', ''),
-                state: p.state === 'output-available' || p.state === 'result' ? 'result' : 'call',
-                args: p.args || p.input,
-                result: p.result || p.output,
-              })))) || []
-            ).map((tool: any) => (
-              <ToolInvocationCard
-                key={tool.toolCallId}
-                tool={tool}
-                addToolOutput={addToolOutput}
-                sendMessage={sendMessage}
-                isLog={true}
-                liveJson={liveJson}
-                transcriptCourses={transcriptCourses}
-                onTranscriptParsed={setTranscriptCourses}
-              />
-            ))}
-            {messages.length > 0 && messages.flatMap((m: any) => (m.toolInvocations) || m.parts).filter((p: any) => p && p.type && (p.type.startsWith('tool-') || p.type === 'tool-call')).length === 0 && (
-              <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                No backend tools executed yet.
-              </div>
-            )}
           </div>
-        </div>
 
-      </div>
+          {/* Bottom Half: Tool Execution Log */}
+          <div className="flex-1 flex flex-col min-h-[50%] bg-zinc-100 dark:bg-black/50">
+            <header className="flex h-12 shrink-0 items-center px-6 bg-zinc-200/50 dark:bg-zinc-900 z-10 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-2 text-zinc-500">
+                <Bot size={14} />
+                <h2 className="text-xs font-semibold tracking-wider uppercase">Agent Tool Execution Log</h2>
+              </div>
+            </header>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.flatMap((m: any) =>
+                ((m.toolInvocations) || (m.parts?.filter((p: any) => p.type.startsWith('tool-') || p.type === 'tool-call').map((p: any) => ({
+                  toolCallId: p.toolCallId,
+                  toolName: p.toolName || p.type.replace('tool-', ''),
+                  state: p.state === 'output-available' || p.state === 'result' ? 'result' : 'call',
+                  args: p.args || p.input,
+                  result: p.result || p.output,
+                })))) || []
+              ).map((tool: any) => (
+                <ToolInvocationCard
+                  key={tool.toolCallId}
+                  tool={tool}
+                  addToolOutput={addToolOutput}
+                  sendMessage={sendMessage}
+                  isLog={true}
+                  liveJson={liveJson}
+                  transcriptCourses={transcriptCourses}
+                  onTranscriptParsed={setTranscriptCourses}
+                />
+              ))}
+              {messages.length > 0 && messages.flatMap((m: any) => (m.toolInvocations) || m.parts).filter((p: any) => p && p.type && (p.type.startsWith('tool-') || p.type === 'tool-call')).length === 0 && (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-400">
+                  No backend tools executed yet.
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
