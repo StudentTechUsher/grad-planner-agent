@@ -5,11 +5,13 @@ export function MajorSelectionForm({
     addToolOutput,
     sendMessage,
     mockPrograms,
+    studentType = "undergrad",
 }: {
     tool: any;
     addToolOutput: any;
     sendMessage: any;
     mockPrograms?: { name: string }[];
+    studentType?: "undergrad" | "honors" | "graduate";
 }) {
     const [query, setQuery] = useState("");
     const [programs, setPrograms] = useState<{ name: string }[]>([]);
@@ -17,6 +19,8 @@ export function MajorSelectionForm({
     const [selected, setSelected] = useState("");
     const [loading, setLoading] = useState(false);
     const [fetched, setFetched] = useState(false);
+    const isGraduate = studentType === "graduate";
+    const programType = isGraduate ? "graduate_no_gen_ed" : "major";
 
     // Lazy-load on first focus or when switching to "I know" path
     const fetchPrograms = async () => {
@@ -29,7 +33,7 @@ export function MajorSelectionForm({
                 setFiltered(mockPrograms);
                 return;
             }
-            const res = await fetch("/api/programs?type=major");
+            const res = await fetch(`/api/programs?type=${programType}`);
             const data = await res.json();
             setPrograms(data.programs ?? []);
             setFiltered(data.programs ?? []);
@@ -53,11 +57,16 @@ export function MajorSelectionForm({
         addToolOutput({
             tool: tool.toolName,
             toolCallId: tool.toolCallId,
-            output: { selectedProgram: selected },
+            output: { selectedProgram: selected, programType },
         });
         sendMessage({
-            text:
-                "[System: Major confirmed as '" +
+            text: isGraduate
+                ? "[System: Graduate program confirmed as '" +
+                selected +
+                "'. Now immediately call selectMajorCourses with programName='" +
+                selected +
+                "' and programType='graduate_no_gen_ed' - do not ask the user, just invoke the tool.]"
+                : "[System: Major confirmed as '" +
                 selected +
                 "'. Now immediately call selectMajorCourses with programName='" +
                 selected +
@@ -69,11 +78,12 @@ export function MajorSelectionForm({
         addToolOutput({
             tool: tool.toolName,
             toolCallId: tool.toolCallId,
-            output: { action: "needsHelp" },
+            output: { action: "needsHelp", programType },
         });
         sendMessage({
-            text:
-                "[System: The user doesn't know their major yet. Please ask the 6 career-discovery questions.]",
+            text: isGraduate
+                ? "[System: The user doesn't know their graduate program yet. Please ask the 6 career-discovery questions, then use queryPrograms with programType='graduate_no_gen_ed'.]"
+                : "[System: The user doesn't know their major yet. Please ask the 6 career-discovery questions.]",
         });
     };
 
@@ -81,10 +91,12 @@ export function MajorSelectionForm({
         <div className="mt-4 w-[380px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
             <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">
-                    Select Your Major
+                    {isGraduate ? "Select Your Graduate Program" : "Select Your Major"}
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
-                    Already know your major? Search for it below. Or let us help you decide.
+                    {isGraduate
+                        ? "Already know your graduate program? Search for it below. Or let us help you decide."
+                        : "Already know your major? Search for it below. Or let us help you decide."}
                 </p>
             </div>
 
@@ -115,8 +127,8 @@ export function MajorSelectionForm({
                                 <label
                                     key={p.name}
                                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-sm ${selected === p.name
-                                            ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
-                                            : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                                        ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
+                                        : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
                                         }`}
                                 >
                                     <input
@@ -143,7 +155,7 @@ export function MajorSelectionForm({
                         disabled={!selected}
                         className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed dark:bg-white dark:text-black shadow-sm"
                     >
-                        Confirm Major
+                        {isGraduate ? "Confirm Graduate Program" : "Confirm Major"}
                     </button>
                 </form>
 
@@ -158,7 +170,7 @@ export function MajorSelectionForm({
                     onClick={handleNeedHelp}
                     className="w-full rounded-xl bg-zinc-100 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
                 >
-                    Help me choose a major
+                    {isGraduate ? "Help me choose a graduate program" : "Help me choose a major"}
                 </button>
             </div>
         </div>

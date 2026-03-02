@@ -102,8 +102,8 @@ export function MinorSelectionForm({
                                 <label
                                     key={p.name}
                                     className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-sm ${selected === p.name
-                                            ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
-                                            : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                                        ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
+                                        : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
                                         }`}
                                 >
                                     <input

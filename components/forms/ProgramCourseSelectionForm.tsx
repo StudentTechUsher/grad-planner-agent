@@ -33,6 +33,7 @@ export function ProgramCourseSelectionForm({
     type,
     transcriptCourses: transcriptCoursesProp,
     mockRequirements,
+    onScaffoldUpdated,
 }: {
     tool: any;
     addToolOutput: any;
@@ -40,6 +41,7 @@ export function ProgramCourseSelectionForm({
     type: "major" | "minor";
     transcriptCourses: any[];
     mockRequirements?: ProgramReq[];
+    onScaffoldUpdated?: (scaffold: any) => void;
 }) {
     const programName: string = tool.args?.programName ?? "";
     const [requirements, setRequirements] = useState<ProgramReq[]>([]);
@@ -218,11 +220,18 @@ export function ProgramCourseSelectionForm({
             crypto.randomUUID();
         if (typeof window !== "undefined")
             sessionStorage.setItem("gradPlanId", planId);
-        fetch("/api/scaffold", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ planId, phase: type, courses: selectedCourses }),
-        }).catch(console.error);
+
+        try {
+            const res = await fetch("/api/scaffold", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ planId, phase: type, courses: selectedCourses, programName }),
+            });
+            const data = await res.json();
+            if (data.scaffold && onScaffoldUpdated) {
+                onScaffoldUpdated(data.scaffold);
+            }
+        } catch (e) { console.error(e) }
 
         addToolOutput({
             tool: tool.toolName,
@@ -316,8 +325,8 @@ export function ProgramCourseSelectionForm({
                         className="h-1.5 rounded-full bg-black dark:bg-white transition-all"
                         style={{
                             width: `${totalSlots > 0
-                                    ? Math.min(100, (filledCount / totalSlots) * 100)
-                                    : 0
+                                ? Math.min(100, (filledCount / totalSlots) * 100)
+                                : 0
                                 }%`,
                         }}
                     />
@@ -439,8 +448,8 @@ export function ProgramCourseSelectionForm({
                                                                 <label
                                                                     key={`${slot.id}-${c.code}`}
                                                                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all text-xs ${isDisabled
-                                                                            ? "cursor-default"
-                                                                            : "cursor-pointer"
+                                                                        ? "cursor-default"
+                                                                        : "cursor-pointer"
                                                                         } ${isSelected
                                                                             ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
                                                                             : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
@@ -511,8 +520,8 @@ export function ProgramCourseSelectionForm({
                         type="submit"
                         disabled={!isFormComplete}
                         className={`w-full rounded-xl py-3 text-sm font-medium transition-all shadow-sm ${isFormComplete
-                                ? "bg-black text-white dark:bg-white dark:text-black hover:scale-[1.02]"
-                                : "bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
+                            ? "bg-black text-white dark:bg-white dark:text-black hover:scale-[1.02]"
+                            : "bg-zinc-200 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed"
                             }`}
                     >
                         {isFormComplete

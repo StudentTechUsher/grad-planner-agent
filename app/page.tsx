@@ -8,9 +8,52 @@ import { AgentChatInput } from "../components/AgentChatInput";
 import { MajorSelectionForm } from "../components/forms/MajorSelectionForm";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import PlanPlayground from "./components/PlanPlayground";
+
+const PREFERENCE_TOOL_NAMES = new Set(["requestUserPreferences", "updateUserPreferences"]);
+type StudentType = "undergrad" | "honors" | "graduate";
+
+function normalizeStudentType(raw: unknown): StudentType {
+  if (raw === "honors") return "honors";
+  if (raw === "graduate" || raw === "grad") return "graduate";
+  return "undergrad";
+}
+
+function extractToolInvocations(msg: any): any[] {
+  if (Array.isArray(msg?.toolInvocations) && msg.toolInvocations.length > 0) return msg.toolInvocations;
+  if (!Array.isArray(msg?.parts)) return [];
+  return msg.parts
+    .filter((p: any) => p.type?.startsWith("tool-") || p.type === "tool-call")
+    .map((p: any) => ({
+      toolName: p.toolName || p.type.replace("tool-", ""),
+      state: p.state === "output-available" || p.state === "result" ? "result" : "call",
+      result: p.result || p.output,
+    }));
+}
+
+function getLatestPreferencesFromMessages(messages: any[]): any | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const tools = extractToolInvocations(messages[i]);
+    for (const tool of tools) {
+      if (tool?.state === "result" && PREFERENCE_TOOL_NAMES.has(tool.toolName) && tool.result) {
+        return tool.result;
+      }
+    }
+  }
+  return undefined;
+}
 
 export default function Home() {
-  const { messages, sendMessage, status, addToolResult, addToolOutput } = useChat();
+  const [planId] = useState(() => crypto.randomUUID());
+
+  // @ts-ignore
+  const { messages, sendMessage, status, addToolResult, addToolOutput } = useChat({
+    // @ts-ignore
+    api: `/api/chat?planId=${planId}`,
+    id: `chat-${planId}`,
+  });
+  // @ts-ignore
+  const scaffoldChat = useChat({ api: '/api/scaffold', id: `scaffold-${planId}` });
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
 
@@ -47,9 +90,130 @@ export default function Home() {
 
   // App state
   const [progress, setProgress] = useState<{ total: number; completed: number } | null>(null);
-  const [workflowStep, setWorkflowStep] = useState(0); // 0: Start, 1: Prefs, 2: Major, 3: Minor/GenEd, 4: Complete
   const [liveJson, setLiveJson] = useState<any>(null);
   const [transcriptCourses, setTranscriptCourses] = useState<any[]>([]);
+  const [isPlanSound, setIsPlanSound] = useState(false);
+  const [showDevToolLog, setShowDevToolLog] = useState(false);
+  const isDevBuild = process.env.NODE_ENV !== "production";
+
+  const preferences = useMemo(() => getLatestPreferencesFromMessages(messages as any[]), [messages]);
+  const workflowProgress = useMemo(() => {
+    const toolInvocations = (messages as any[]).flatMap((message) => extractToolInvocations(message));
+    const resultInvocations = toolInvocations.filter((tool) => tool?.state === "result");
+    const hasResult = (toolName: string) => resultInvocations.some((tool) => tool.toolName === toolName);
+    const hasToolAnyState = (toolName: string) => toolInvocations.some((tool) => tool.toolName === toolName);
+    const latestResult = (toolName: string) => {
+      for (let i = resultInvocations.length - 1; i >= 0; i--) {
+        const tool = resultInvocations[i];
+        if (tool.toolName === toolName) return tool.result;
+      }
+      return undefined;
+    };
+
+    const studentType = normalizeStudentType(preferences?.studentType);
+    const latestMinorSelection: any = latestResult("requestMinorSelection");
+    const minorSelected =
+      !!latestMinorSelection &&
+      typeof latestMinorSelection === "object" &&
+      !!latestMinorSelection.selectedProgram &&
+      latestMinorSelection.skipped !== true;
+
+    const latestHeuristics: any = latestResult("checkPlanHeuristics");
+    let heuristicsClean = false;
+    if (latestHeuristics && typeof latestHeuristics === "object") {
+      const warnings = Array.isArray(latestHeuristics.warnings) ? latestHeuristics.warnings : [];
+      const totalUnplanned =
+        typeof latestHeuristics.totalUnplanned === "number" ? latestHeuristics.totalUnplanned : 0;
+      const inferredSound = warnings.length === 0 && totalUnplanned === 0;
+      heuristicsClean =
+        typeof latestHeuristics.isPlanSound === "boolean"
+          ? latestHeuristics.isPlanSound
+          : inferredSound;
+      if (totalUnplanned > 0) heuristicsClean = false;
+    }
+
+    const applyForGraduationInserted = resultInvocations.some((tool) => {
+      if (tool.toolName !== "insertMilestone" && tool.toolName !== "insertAcademicMilestone") return false;
+      const result: any = tool.result;
+      const singleMilestoneName =
+        result?.milestone?.title || result?.milestone?.type || result?.milestoneName;
+      if (
+        typeof singleMilestoneName === "string" &&
+        singleMilestoneName.toLowerCase() === "apply for graduation"
+      ) {
+        return true;
+      }
+      const milestoneList = Array.isArray(result?.milestones) ? result.milestones : [];
+      return milestoneList.some(
+        (milestone: any) =>
+          typeof milestone?.title === "string" &&
+          milestone.title.toLowerCase() === "apply for graduation"
+      );
+    });
+
+    const steps: Array<{ id: string; done: boolean }> = [
+      {
+        id: "preferences",
+        done: hasResult("requestUserPreferences") || hasResult("updateUserPreferences"),
+      },
+      {
+        id: studentType === "graduate" ? "graduate-program" : "major-selection",
+        done: hasResult("requestMajorSelection"),
+      },
+      {
+        id: studentType === "graduate" ? "graduate-courses" : "major-courses",
+        done: hasResult("selectMajorCourses"),
+      },
+    ];
+
+    if (studentType !== "graduate") {
+      steps.push({
+        id: "minor-selection",
+        done: hasResult("requestMinorSelection"),
+      });
+      if (minorSelected) {
+        steps.push({
+          id: "minor-courses",
+          done: hasResult("selectMinorCourses"),
+        });
+      }
+      if (studentType === "honors") {
+        steps.push({
+          id: "honors-selection",
+          done: hasResult("requestHonorsSelection"),
+        });
+      }
+      steps.push({
+        id: "gen-ed-selection",
+        done: hasResult("selectGenEdCourses") || hasResult("requestGenEdSelection"),
+      });
+    }
+
+    steps.push(
+      { id: "heuristics", done: heuristicsClean },
+      { id: "milestones-form", done: hasResult("addMilestones") },
+      { id: "apply-for-graduation", done: applyForGraduationInserted },
+      { id: "plan-review", done: hasToolAnyState("requestPlanReview") }
+    );
+
+    let completed = 0;
+    for (const step of steps) {
+      if (!step.done) break;
+      completed += 1;
+    }
+
+    const total = Math.max(steps.length, 1);
+    const current = completed >= total ? total : Math.min(completed + 1, total);
+    const started = toolInvocations.length > 0;
+
+    return {
+      started,
+      completed,
+      total,
+      label: completed >= total ? "Plan Complete" : `Step ${current} of ${total}`,
+      percent: Math.min(100, Math.round((completed / total) * 100)),
+    };
+  }, [messages, preferences?.studentType]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,37 +239,94 @@ export default function Home() {
 
       if (tools.length > 0) {
         for (const tool of tools) {
-          // Progress logic (using functional updater so rapid tool calls resolve correctly)
-          if (tool.toolName === "requestUserPreferences" && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 1));
-          if (tool.toolName === "requestMajorSelection" && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 2));
-          if (tool.toolName === "selectMajorCourses" && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 3));
-          if (tool.toolName === "requestMinorSelection" && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 4));
-          if ((tool.toolName === "selectMinorCourses" || tool.toolName === "selectGenEdCourses" || tool.toolName === "requestGenEdSelection") && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 5));
-          if (tool.toolName === "getStudentTranscript" && tool.state === "result") setWorkflowStep(prev => Math.max(prev, 6));
-
           if (tool.toolName === "creditsCalculator" && tool.state === "result") {
             const { totalRequired, completedCredits } = tool.args;
             setProgress({ total: totalRequired, completed: completedCredits });
           }
           if (tool.toolName === "generateGradPlanScaffold" && tool.state === "result" && tool.result?.scaffold) {
             setLiveJson(tool.result.scaffold);
-            setWorkflowStep(prev => Math.max(prev, 7));
+          }
+
+          if (['createTerm', 'deleteTerm', 'addCoursesToTerm', 'removeCourseFromTerm'].includes(tool.toolName) && tool.state === "result" && tool.result?.plan) {
+            setLiveJson((prev: any) => ({
+              ...(prev ?? {}),
+              plan: tool.result.plan,
+              milestones: Array.isArray(tool.result?.milestones) ? tool.result.milestones : (prev?.milestones ?? []),
+            }));
+            setIsPlanSound(false); // Reset if they are still editing
+          }
+
+          if (['insertMilestone', 'insertAcademicMilestone'].includes(tool.toolName) && tool.state === "result") {
+            setLiveJson((prev: any) => ({
+              ...(prev ?? {}),
+              plan: Array.isArray(tool.result?.plan) ? tool.result.plan : (prev?.plan ?? []),
+              milestones: Array.isArray(tool.result?.milestones) ? tool.result.milestones : (prev?.milestones ?? []),
+            }));
+          }
+
+          if (tool.toolName === "checkPlanHeuristics" && tool.state === "result") {
+            if (typeof tool.result?.isPlanSound === "boolean") {
+              setIsPlanSound(tool.result.isPlanSound === true);
+            } else if (tool.result?.message && (!Array.isArray(tool.result?.warnings) || tool.result.warnings.length === 0)) {
+              setIsPlanSound(true);
+            } else {
+              setIsPlanSound(false);
+            }
           }
         }
       }
     }
-  }, [messages]);
+
+    // Process scaffoldChat messages for plan updates and workflow steps
+    for (let i = scaffoldChat.messages.length - 1; i >= 0; i--) {
+      const msg = scaffoldChat.messages[i] as any;
+      const tools = msg.toolInvocations || [];
+      if (tools.length > 0) {
+        for (const tool of tools) {
+          if (tool.toolName === "updateGradPlan" && tool.state === "result") {
+            // When tool is complete, use the rigorously enforced plan returned from the backend
+            if (tool.result?.plan) {
+              setLiveJson({ plan: tool.result.plan });
+            } else {
+              setLiveJson({ plan: tool.args.terms });
+            }
+          } else if (tool.toolName === "updateGradPlan") {
+            try {
+              const args = typeof tool.args === 'string' ? JSON.parse(tool.args) : tool.args;
+              if (args?.terms) {
+                setLiveJson({ plan: args.terms }); // Partial streaming update
+              }
+            } catch (e) { }
+          }
+        }
+      }
+    }
+  }, [messages, scaffoldChat.messages]);
 
   const percentage = progress ? Math.min(100, Math.round((progress.completed / progress.total) * 100)) : 0;
 
   // Disable input only while the agent is actively streaming/thinking
   const isInputDisabled = isLoading;
 
+  const allToolLogs = useMemo(
+    () =>
+      [...messages, ...scaffoldChat.messages].flatMap((m: any) =>
+        ((m.toolInvocations) || (m.parts?.filter((p: any) => p.type.startsWith('tool-') || p.type === 'tool-call').map((p: any) => ({
+          toolCallId: p.toolCallId,
+          toolName: p.toolName || p.type.replace('tool-', ''),
+          state: p.state === 'output-available' || p.state === 'result' ? 'result' : 'call',
+          args: p.args || p.input,
+          result: p.result || p.output,
+        })))) || []
+      ),
+    [messages, scaffoldChat.messages]
+  );
+
   return (
     <div className="flex h-screen w-full bg-zinc-50 dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 selection:bg-zinc-300 dark:selection:bg-zinc-700">
 
       {/* LEFT COLUMN: CHAT */}
-      <div className={`flex w-full ${process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' ? 'lg:w-3/5' : ''} flex-col border-r border-zinc-200 dark:border-zinc-800 relative z-10 transition-all`}>
+      <div className="flex w-full lg:w-2/5 flex-col lg:border-r border-zinc-200 dark:border-zinc-800 relative z-10 transition-all">
         {/* Header */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-6 bg-white dark:bg-black z-10">
           <div className="flex items-center gap-3">
@@ -115,15 +336,15 @@ export default function Home() {
             <h1 className="text-lg font-medium tracking-tight">Grad Planner AI</h1>
           </div>
           {/* Workflow Progress (If initialized) */}
-          {workflowStep > 0 && (
+          {workflowProgress.started && (
             <div className="flex items-center gap-3 text-xs font-medium">
               <span className="text-zinc-500 hidden sm:inline">
-                {workflowStep === 5 ? "Plan Complete" : `Step ${workflowStep} of 5`}
+                {workflowProgress.label}
               </span>
               <div className="h-2 w-24 sm:w-32 md:w-32 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(workflowStep / 5) * 100}%` }}
+                  animate={{ width: `${workflowProgress.percent}%` }}
                   className="h-full bg-blue-500"
                 />
               </div>
@@ -191,8 +412,14 @@ export default function Home() {
                   if (rawContent.includes('Minor course selections submitted')) {
                     return '✓ Minor courses submitted';
                   }
+                  if (rawContent.includes('Honors acknowledgment') || rawContent.includes('requestHonorsSelection')) {
+                    return '✓ Honors acknowledged';
+                  }
                   if (rawContent.includes('Gen Ed course selections submitted') || rawContent.includes('getStudentTranscript')) {
                     return '✓ Gen Ed selections submitted';
+                  }
+                  if (rawContent.includes('Milestones submitted') || rawContent.includes('addMilestones')) {
+                    return '✓ Milestones submitted';
                   }
                   if (rawContent.includes('getStudentTranscript') || rawContent.includes('transcript')) {
                     return '✓ Transcript provided';
@@ -235,16 +462,21 @@ export default function Home() {
                         result: p.result || p.output,
                       }))))?.map((tool: any) => {
                         // Only render forms inline (UI interceptors)
-                        if (tool.toolName.startsWith("request") || tool.toolName.startsWith("select") || tool.toolName === "getStudentTranscript" || tool.toolName === "presentMajorOptions" || tool.toolName === "requestCareerQuestionnaire" || tool.toolName === "queryPrograms") {
+                        if (tool.toolName.startsWith("request") || tool.toolName.startsWith("select") || tool.toolName === "addMilestones" || tool.toolName === "getStudentTranscript" || tool.toolName === "presentMajorOptions" || tool.toolName === "requestCareerQuestionnaire" || tool.toolName === "queryPrograms" || tool.toolName === "updateGradPlan" || tool.toolName === "updateUserPreferences") {
                           return (
                             <ToolInvocationCard
                               key={tool.toolCallId}
                               tool={tool}
                               addToolOutput={addToolOutput}
                               sendMessage={sendMessage}
+                              planId={planId}
                               liveJson={liveJson}
                               transcriptCourses={transcriptCourses}
                               onTranscriptParsed={setTranscriptCourses}
+                              onScaffoldUpdated={setLiveJson}
+                              scaffoldChat={scaffoldChat}
+                              messages={messages}
+                              preferences={preferences}
                             />
                           );
                         }
@@ -256,14 +488,14 @@ export default function Home() {
               })
             )}
 
-            {isLoading && messages[messages.length - 1]?.role === "user" && (
+            {isLoading && (
               <div className="flex gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white dark:bg-white dark:text-black">
-                  <Bot size={16} />
-                </div>
-                <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-white px-5 py-3 text-sm dark:border-zinc-800 dark:bg-zinc-900 shadow-sm text-zinc-500">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60">
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Thinking...</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm dark:border-violet-900/60 dark:bg-violet-950/20 shadow-sm text-violet-700 dark:text-violet-300">
+                  <Loader2 size={16} className="animate-spin text-violet-500 dark:text-violet-400" />
+                  <span>Agent is thinking in the Playground...</span>
                 </div>
               </div>
             )}
@@ -282,85 +514,134 @@ export default function Home() {
         )}
       </div>
 
-      {/* RIGHT COLUMN: JSON VIEWER & TOOL LOGS SIDEBAR */}
-      {process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' && (
-        <div className="hidden lg:flex w-2/5 flex-col bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800">
-
-          {/* Top Half: JSON Plan */}
-          <div className="flex-1 flex flex-col min-h-[50%] border-b border-zinc-200 dark:border-zinc-800">
-            <header className="flex h-16 shrink-0 items-center px-6 bg-white dark:bg-black z-10 border-b border-zinc-200 dark:border-zinc-800">
-              <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-500">Live JSON Plan Viewer</h2>
-            </header>
-            <div className="flex-1 overflow-y-auto p-6 font-mono text-xs leading-relaxed bg-zinc-50 dark:bg-zinc-950">
-              {liveJson ? (
-                <pre className="p-4 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm overflow-x-auto text-zinc-800 dark:text-zinc-300">
-                  {JSON.stringify(liveJson, null, 2)}
-                </pre>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-zinc-400 space-y-4">
-                  <div className="w-16 h-16 border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-xl flex items-center justify-center">
-                    <span className="text-2xl opacity-50">{'{ }'}</span>
-                  </div>
-                  <p>Grad plan scaffold not generated yet.</p>
+      {/* RIGHT COLUMN: AGENTIC PLAYGROUND */}
+      <div className="hidden lg:flex lg:w-3/5 flex-col bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 relative">
+        <header className="flex h-16 shrink-0 items-center justify-between px-6 bg-white dark:bg-black z-10 border-b border-zinc-200 dark:border-zinc-800 gap-4">
+          <div className="flex items-center gap-4">
+            {isPlanSound && (
+              <button
+                onClick={() => {
+                  alert("Graduation Plan Accepted! You're on track to graduate.");
+                }}
+                className="px-4 py-2 bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black text-xs font-bold rounded-lg shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 animate-in zoom-in-95 duration-300"
+              >
+                <CheckCircle2 size={14} />
+                Accept Grad Plan
+              </button>
+            )}
+            <div className="flex items-center gap-4">
+              <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-500">Agentic Playground</h2>
+              {isPlanSound && (
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold animate-in fade-in slide-in-from-left-2 duration-500">
+                  <CheckCircle2 size={14} />
+                  <span>Plan meets graduation requirements</span>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Bottom Half: Tool Execution Log */}
-          <div className="flex-1 flex flex-col min-h-[50%] bg-zinc-100 dark:bg-black/50">
-            <header className="flex h-12 shrink-0 items-center px-6 bg-zinc-200/50 dark:bg-zinc-900 z-10 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-2 text-zinc-500">
-                <Bot size={14} />
-                <h2 className="text-xs font-semibold tracking-wider uppercase">Agent Tool Execution Log</h2>
-              </div>
-            </header>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.flatMap((m: any) =>
-                ((m.toolInvocations) || (m.parts?.filter((p: any) => p.type.startsWith('tool-') || p.type === 'tool-call').map((p: any) => ({
-                  toolCallId: p.toolCallId,
-                  toolName: p.toolName || p.type.replace('tool-', ''),
-                  state: p.state === 'output-available' || p.state === 'result' ? 'result' : 'call',
-                  args: p.args || p.input,
-                  result: p.result || p.output,
-                })))) || []
-              ).map((tool: any) => (
-                <ToolInvocationCard
-                  key={tool.toolCallId}
-                  tool={tool}
-                  addToolOutput={addToolOutput}
-                  sendMessage={sendMessage}
-                  isLog={true}
-                  liveJson={liveJson}
-                  transcriptCourses={transcriptCourses}
-                  onTranscriptParsed={setTranscriptCourses}
-                />
-              ))}
-              {messages.length > 0 && messages.flatMap((m: any) => (m.toolInvocations) || m.parts).filter((p: any) => p && p.type && (p.type.startsWith('tool-') || p.type === 'tool-call')).length === 0 && (
-                <div className="flex h-full items-center justify-center text-xs text-zinc-400">
-                  No backend tools executed yet.
-                </div>
-              )}
-            </div>
-          </div>
-
+          {isDevBuild && (
+            <button
+              type="button"
+              onClick={() => setShowDevToolLog((prev) => !prev)}
+              className="px-3 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+            >
+              {showDevToolLog ? "Hide Dev Log" : "Show Dev Log"}
+            </button>
+          )}
+        </header>
+        <div className="flex-1 overflow-y-auto p-0 font-mono text-xs leading-relaxed bg-zinc-50 dark:bg-zinc-950">
+          <PlanPlayground
+            planData={liveJson}
+            preferences={preferences}
+            isBuilding={isLoading}
+          />
         </div>
-      )}
+
+        {isDevBuild && (
+          <AnimatePresence>
+            {showDevToolLog && (
+              <motion.aside
+                initial={{ x: "100%", opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: "100%", opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="absolute inset-y-0 right-0 w-[420px] max-w-full bg-zinc-100 dark:bg-black/90 border-l border-zinc-200 dark:border-zinc-800 z-20 flex flex-col shadow-2xl"
+              >
+                <header className="flex h-12 shrink-0 items-center justify-between px-4 bg-zinc-200/60 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-2 text-zinc-500">
+                    <Bot size={14} />
+                    <h2 className="text-xs font-semibold tracking-wider uppercase">Agent Tool Execution Log</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowDevToolLog(false)}
+                    className="text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors"
+                  >
+                    Close
+                  </button>
+                </header>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  {allToolLogs.map((tool: any) => (
+                    <ToolInvocationCard
+                      key={tool.toolCallId}
+                      tool={tool}
+                      addToolOutput={addToolOutput}
+                      sendMessage={sendMessage}
+                      planId={planId}
+                      isLog={true}
+                      liveJson={liveJson}
+                      transcriptCourses={transcriptCourses}
+                      onTranscriptParsed={setTranscriptCourses}
+                      onScaffoldUpdated={setLiveJson}
+                      scaffoldChat={scaffoldChat}
+                      messages={messages}
+                      preferences={preferences}
+                    />
+                  ))}
+                  {messages.length === 0 && scaffoldChat.messages.length === 0 && (
+                    <div className="flex h-full items-center justify-center text-xs text-zinc-400">
+                      No backend tools executed yet.
+                    </div>
+                  )}
+                </div>
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }
 
-function ToolInvocationCard({ tool, addToolOutput, sendMessage, isLog = false, liveJson, transcriptCourses, onTranscriptParsed }: { tool: any, addToolOutput: (args: any) => void, sendMessage: any, isLog?: boolean, liveJson?: any, transcriptCourses?: any[], onTranscriptParsed?: (courses: any[]) => void }) {
+function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = false, liveJson, transcriptCourses, onTranscriptParsed, onScaffoldUpdated, scaffoldChat, messages, preferences }: { tool: any, addToolOutput: (args: any) => void, sendMessage: any, planId: string, isLog?: boolean, liveJson?: any, transcriptCourses?: any[], onTranscriptParsed?: (courses: any[]) => void, onScaffoldUpdated?: (scaffold: any) => void, scaffoldChat?: any, messages?: any[], preferences?: any }) {
   const [expanded, setExpanded] = useState(false);
   const isComplete = tool.state === "result";
+  const studentType = normalizeStudentType(preferences?.studentType);
 
   if (!isLog) {
     // Specific Generators (Generative UI interception)
-    if (!isComplete && tool.toolName === "requestUserPreferences") {
+    if (!isComplete && (tool.toolName === "requestUserPreferences" || tool.toolName === "updateUserPreferences")) {
       return <PreferencesForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} onTranscriptParsed={onTranscriptParsed} />;
     }
+    if (isComplete && tool.toolName === "updateGradPlan") {
+      return (
+        <div className="mt-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 p-2 rounded border border-zinc-200 dark:border-zinc-700">
+          <div className="font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Graduation Plan Updated</div>
+          <div>Added <span className="font-medium text-zinc-700 dark:text-zinc-300">{tool.result?.coursesAdded ?? 'several'}</span> courses to the schedule.</div>
+        </div>
+      );
+    }
+    if (!isComplete && tool.toolName === "updateGradPlan") {
+      return (
+        <div className="flex items-center gap-2 mt-2 text-xs text-zinc-500 bg-zinc-50 dark:bg-zinc-800 p-2 rounded border border-zinc-200 dark:border-zinc-700">
+          <Loader2 className="animate-spin text-zinc-400" size={14} />
+          <span>Sub-agent is building and updating your graduation plan...</span>
+        </div>
+      );
+    }
+
     if (!isComplete && tool.toolName === "requestMajorSelection") {
-      return <MajorSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
+      return <MajorSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} studentType={studentType} />;
     }
     if (!isComplete && tool.toolName === "requestCareerQuestionnaire") {
       return <CareerQuestionnaireForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
@@ -369,25 +650,42 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, isLog = false, l
       return <MajorOptionsForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
     }
     if (!isComplete && tool.toolName === "requestMinorSelection") {
-      return <MinorSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
+      return <MinorSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} studentType={studentType} />;
+    }
+    if (!isComplete && tool.toolName === "requestHonorsSelection") {
+      return <HonorsSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
     }
     if (!isComplete && tool.toolName === "requestGenEdSelection") {
-      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} transcriptCourses={transcriptCourses ?? []} />;
+      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} messages={messages || []} />;
     }
     if (!isComplete && tool.toolName === "selectMajorCourses") {
-      return <ProgramCourseSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} type="major" transcriptCourses={transcriptCourses ?? []} />;
+      return <ProgramCourseSelectionForm
+        tool={tool}
+        addToolOutput={addToolOutput}
+        sendMessage={sendMessage}
+        planId={planId}
+        type={tool.args?.programType === "graduate_no_gen_ed" ? "graduate_no_gen_ed" : "major"}
+        studentType={studentType}
+        transcriptCourses={transcriptCourses ?? []}
+        onScaffoldUpdated={onScaffoldUpdated}
+        scaffoldChat={scaffoldChat}
+        messages={messages || []}
+      />;
     }
     if (!isComplete && tool.toolName === "selectMinorCourses") {
-      return <ProgramCourseSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} type="minor" transcriptCourses={transcriptCourses ?? []} />;
+      return <ProgramCourseSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} type="minor" studentType={studentType} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} messages={messages || []} />;
     }
     if (!isComplete && tool.toolName === "selectGenEdCourses") {
-      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} transcriptCourses={transcriptCourses ?? []} />;
+      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} messages={messages || []} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} />;
     }
     if (!isComplete && tool.toolName === "getStudentTranscript") {
       return <TranscriptUploadForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
     }
     if (!isComplete && tool.toolName === "requestPlanReview") {
       return <PlanReviewForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} />;
+    }
+    if (!isComplete && tool.toolName === "addMilestones") {
+      return <MilestonesForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} />;
     }
 
     // queryPrograms result: automatically show options form when recommendedPrograms are available
@@ -397,8 +695,26 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, isLog = false, l
     // Still loading / no recommended programs yet — show nothing inline
     if (tool.toolName === "queryPrograms") return null;
 
+    if (isComplete && (tool.toolName === "requestUserPreferences" || tool.toolName === "updateUserPreferences")) {
+      return (
+        <div className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center justify-between gap-3 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={14} />
+            Preferences Submitted Successfully
+          </div>
+          <button
+            type="button"
+            onClick={() => sendMessage({ text: "[System: User requested to update preferences. Immediately call updateUserPreferences and wait for form submission.]" })}
+            className="text-[11px] font-semibold px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
+          >
+            Update Preferences
+          </button>
+        </div>
+      );
+    }
+
     // Already submitted state for these forms
-    if (isComplete && (tool.toolName.startsWith("request") || tool.toolName.startsWith("select") || tool.toolName === "getStudentTranscript" || tool.toolName === "presentMajorOptions")) {
+    if (isComplete && (tool.toolName.startsWith("request") || tool.toolName.startsWith("select") || tool.toolName === "addMilestones" || tool.toolName === "getStudentTranscript" || tool.toolName === "presentMajorOptions")) {
       return (
         <div className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
           <CheckCircle2 size={14} />
@@ -409,7 +725,7 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, isLog = false, l
   }
 
   return (
-    <div className="w-full mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 shadow-sm text-sm">
+    <div className="w-full mt-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:bg-zinc-900/50 dark:border-zinc-800 shadow-sm text-sm">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
@@ -458,7 +774,10 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
   const [maxCredits, setMaxCredits] = useState(15);
   const [minCredits, setMinCredits] = useState(12);
   const [genEdStrategy, setGenEdStrategy] = useState<"prioritize" | "balance">("balance");
-  const [studentType, setStudentType] = useState<"undergrad" | "honors" | "grad">("undergrad");
+  const [studentType, setStudentType] = useState<StudentType>("undergrad");
+  const [graduationPace, setGraduationPace] = useState<"fast" | "sustainable" | "undecided">("sustainable");
+  const [anticipatedGraduation, setAnticipatedGraduation] = useState("");
+
 
   // Transcript upload state
   const [showTranscript, setShowTranscript] = useState(false);
@@ -548,7 +867,7 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const output: any = { maxCredits, minCredits, genEdStrategy, studentType };
+    const output: any = { maxCredits, minCredits, genEdStrategy, studentType, graduationPace, anticipatedGraduation };
     if (transcriptCourses.length > 0) {
       output.transcriptCourses = transcriptCourses;
       output.transcriptGpa = transcriptGpa;
@@ -556,6 +875,12 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
     // Lift transcript courses to parent state (no sessionStorage needed)
     onTranscriptParsed?.(transcriptCourses);
     addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output });
+    if (tool.toolName === "updateUserPreferences") {
+      sendMessage({
+        text: "[System: Preferences updated" + (transcriptCourses.length > 0 ? ` with ${transcriptCourses.length} transcript courses` : '') + ". Re-evaluate the current plan with the new constraints: call getRemainingCoursesToPlan and checkPlanHeuristics, then adjust terms/courses as needed.]"
+      });
+      return;
+    }
     sendMessage({ text: "[System: Preferences saved" + (transcriptCourses.length > 0 ? ` with ${transcriptCourses.length} transcript courses` : '') + ". Now call requestMajorSelection.]" });
   };
 
@@ -567,12 +892,12 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
       </div>
       <form onSubmit={handleSubmit} className="p-5 space-y-5">
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Min Credits</label>
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Min Credits I want to take per semester</label>
           <input type="number" value={minCredits} onChange={(e) => setMinCredits(parseInt(e.target.value) || 0)}
             className="w-full rounded-xl border border-zinc-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white transition-all shadow-sm" />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Max Credits</label>
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Max Credits I want to take per semester</label>
           <input type="number" value={maxCredits} onChange={(e) => setMaxCredits(parseInt(e.target.value) || 0)}
             className="w-full rounded-xl border border-zinc-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white transition-all shadow-sm" />
         </div>
@@ -581,7 +906,7 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
           <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1">
             <button type="button" onClick={() => setGenEdStrategy("prioritize")}
               className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all ${genEdStrategy === "prioritize" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
-              Prioritize
+              Prioritize Gen Eds
             </button>
             <button type="button" onClick={() => setGenEdStrategy("balance")}
               className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all ${genEdStrategy === "balance" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
@@ -591,6 +916,11 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
           <p className="text-[10px] text-zinc-500 leading-tight">
             {genEdStrategy === "prioritize" ? "Complete Gen Eds as early as possible." : "Spread Gen Eds evenly across semesters."}
           </p>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Anticipated Graduation Date</label>
+          <input type="text" value={anticipatedGraduation} onChange={(e) => setAnticipatedGraduation(e.target.value)} placeholder="e.g. Spring 2028 (Optional)"
+            className="w-full rounded-xl border border-zinc-300 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white transition-all shadow-sm" />
         </div>
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Student Type</label>
@@ -603,11 +933,31 @@ function PreferencesForm({ tool, addToolOutput, sendMessage, onTranscriptParsed 
               className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${studentType === "honors" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
               Honors
             </button>
-            <button type="button" onClick={() => setStudentType("grad")}
-              className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${studentType === "grad" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
+            <button type="button" onClick={() => setStudentType("graduate")}
+              className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${studentType === "graduate" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
               Grad
             </button>
           </div>
+        </div>
+        <div className="space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+          <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Graduation Pace</label>
+          <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1 gap-1">
+            <button type="button" onClick={() => setGraduationPace("fast")}
+              className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${graduationPace === "fast" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
+              ASAP
+            </button>
+            <button type="button" onClick={() => setGraduationPace("sustainable")}
+              className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${graduationPace === "sustainable" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
+              Sustainable
+            </button>
+            <button type="button" onClick={() => setGraduationPace("undecided")}
+              className={`flex-1 py-2 px-2 text-xs font-medium rounded-lg transition-all ${graduationPace === "undecided" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"}`}>
+              Undecided
+            </button>
+          </div>
+          <p className="text-[10px] text-zinc-500 leading-tight">
+            {graduationPace === "fast" ? "Graduate as soon as possible." : graduationPace === "sustainable" ? "Maintain a comfortable workload." : "Not sure what program to commit to yet."}
+          </p>
         </div>
 
         {/* ── Transcript Upload Section ── */}
@@ -894,11 +1244,123 @@ function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson }: { tool: 
   );
 }
 
+function MilestonesForm({ tool, addToolOutput, sendMessage, liveJson }: { tool: any, addToolOutput: any, sendMessage: any, liveJson: any }) {
+  const optionalMilestones = ["Study Abroad", "Internship", "Research", "Apply for Graduate Program"];
+  const termOptions: string[] = Array.isArray(liveJson?.plan)
+    ? liveJson.plan.map((term: any) => term.term).filter((term: any) => typeof term === "string" && term.length > 0)
+    : [];
+  const applyForGraduationTerm = termOptions.length > 1
+    ? termOptions[termOptions.length - 2]
+    : termOptions[0] ?? "";
+
+  const [selectedMilestones, setSelectedMilestones] = useState<Record<string, boolean>>({});
+  const [afterTermSelections, setAfterTermSelections] = useState<Record<string, string>>({});
+
+  const toggleMilestone = (name: string) => {
+    setSelectedMilestones((prev) => {
+      const nextValue = !prev[name];
+      if (nextValue && !afterTermSelections[name] && termOptions.length > 0) {
+        setAfterTermSelections((old) => ({ ...old, [name]: termOptions[0] }));
+      }
+      return { ...prev, [name]: nextValue };
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applyForGraduationTerm) return;
+
+    const milestones = [
+      { milestoneName: "Apply For Graduation", targetTerm: applyForGraduationTerm, required: true },
+      ...optionalMilestones
+        .filter((name) => selectedMilestones[name])
+        .map((name) => ({
+          milestoneName: name,
+          targetTerm: afterTermSelections[name] || termOptions[0],
+          required: false,
+        })),
+    ];
+
+    addToolOutput({
+      tool: tool.toolName,
+      toolCallId: tool.toolCallId,
+      output: {
+        milestones,
+      },
+    });
+
+    sendMessage({
+      text: "[System: Milestones submitted. Call insertMilestone for each milestone returned by addMilestones (including Apply For Graduation). Apply For Graduation must be before the final semester. After all milestone insertions are complete, call requestPlanReview.]",
+    });
+  };
+
+  return (
+    <div className="mt-4 w-[420px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
+        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Add Milestones</h3>
+        <p className="text-xs text-zinc-500 mt-1">Milestones appear between terms in your plan.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        {termOptions.length === 0 ? (
+          <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-xl px-3 py-2">
+            No terms found yet. Build the plan terms first, then add milestones.
+          </div>
+        ) : (
+          <>
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-3 bg-zinc-50 dark:bg-zinc-900/40">
+              <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Apply For Graduation</p>
+              <p className="text-xs text-zinc-500 mt-1">Required. Automatically placed after <span className="font-medium">{applyForGraduationTerm}</span>.</p>
+            </div>
+
+            <div className="space-y-3">
+              {optionalMilestones.map((name) => (
+                <div key={name} className="rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedMilestones[name]}
+                      onChange={() => toggleMilestone(name)}
+                      className="w-4 h-4 accent-black dark:accent-white"
+                    />
+                    {name}
+                  </label>
+                  {selectedMilestones[name] && (
+                    <select
+                      value={afterTermSelections[name] || termOptions[0]}
+                      onChange={(e) => setAfterTermSelections((prev) => ({ ...prev, [name]: e.target.value }))}
+                      className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white"
+                    >
+                      {termOptions.map((term) => (
+                        <option key={`${name}-${term}`} value={term}>
+                          After {term}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <button
+          type="submit"
+          disabled={!applyForGraduationTerm}
+          className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed dark:bg-white dark:text-black shadow-sm"
+        >
+          Save Milestones
+        </button>
+      </form>
+    </div>
+  );
+}
+
 
 // ─── MinorSelectionForm ────────────────────────────────────────────────
 // Mirrors MajorSelectionForm but for minors. Offers autocomplete search
 // from the DB plus a "Skip / No Minor" escape hatch.
-function MinorSelectionForm({ tool, addToolOutput, sendMessage }: { tool: any, addToolOutput: any, sendMessage: any }) {
+function MinorSelectionForm({ tool, addToolOutput, sendMessage, studentType }: { tool: any, addToolOutput: any, sendMessage: any, studentType: StudentType }) {
   const [query, setQuery] = useState("");
   const [programs, setPrograms] = useState<{ name: string }[]>([]);
   const [filtered, setFiltered] = useState<{ name: string }[]>([]);
@@ -935,7 +1397,11 @@ function MinorSelectionForm({ tool, addToolOutput, sendMessage }: { tool: any, a
 
   const handleSkip = () => {
     addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { selectedProgram: null, skipped: true } });
-    sendMessage({ text: "[System: User chose not to add a minor. Now immediately call selectGenEdCourses \u2014 do not ask the user, just invoke the tool.]" });
+    sendMessage({
+      text: studentType === "honors"
+        ? "[System: User chose not to add a minor. This student is honors-track, so now immediately call requestHonorsSelection — do not ask the user, just invoke the tool.]"
+        : "[System: User chose not to add a minor. Now immediately call selectGenEdCourses \u2014 do not ask the user, just invoke the tool.]"
+    });
   };
 
   return (
@@ -1008,6 +1474,52 @@ function MinorSelectionForm({ tool, addToolOutput, sendMessage }: { tool: any, a
           className="w-full rounded-xl bg-zinc-100 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
         >
           Skip — No Minor
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HonorsSelectionForm({ tool, addToolOutput, sendMessage }: { tool: any, addToolOutput: any, sendMessage: any }) {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleAcknowledge = () => {
+    setSubmitted(true);
+    addToolOutput({
+      tool: tool.toolName,
+      toolCallId: tool.toolCallId,
+      output: {
+        acknowledged: true,
+        message: "Honors isn't configured for your university yet",
+      },
+    });
+    sendMessage({
+      text: "[System: Honors acknowledgment captured. Now immediately call selectGenEdCourses \u2014 do not ask the user, just invoke the tool.]",
+    });
+  };
+
+  if (submitted) {
+    return (
+      <div className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+        <CheckCircle2 size={14} />
+        Honors acknowledgment submitted
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 w-[380px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
+      <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
+        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Honors Courses</h3>
+      </div>
+      <div className="p-5 space-y-4">
+        <p className="text-sm text-zinc-700 dark:text-zinc-300">Honors isn&apos;t configured for your university yet</p>
+        <button
+          type="button"
+          onClick={handleAcknowledge}
+          className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] dark:bg-white dark:text-black shadow-sm"
+        >
+          Acknowledged
         </button>
       </div>
     </div>
@@ -1237,7 +1749,7 @@ function fmtCredits(credits: GenEdCourse['credits']): string {
   return `${credits.min}–${credits.max} cr`;
 }
 
-function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourses }: { tool: any; addToolOutput: any; sendMessage: any; transcriptCourses: any[] }) {
+function GenEdSelectionForm({ tool, addToolOutput, sendMessage, planId, messages, transcriptCourses, onScaffoldUpdated, scaffoldChat }: { tool: any; addToolOutput: any; sendMessage: any; planId: string; messages: any[]; transcriptCourses: any[]; onScaffoldUpdated?: (scaffold: any) => void; scaffoldChat?: any }) {
   const [year, setYear] = useState<'2024' | 'pre-2024' | null>(null);
   const [requirements, setRequirements] = useState<GenEdReq[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1297,7 +1809,18 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
       }
       setSelections(prev => ({ ...prev, ...autoSelections }));
 
-      if (reqs.length > 0) setExpanded({ [`${reqs[0].requirementId}-0`]: true });
+      const autoExpanded: Record<string, boolean> = {};
+      for (let i = 0; i < reqs.length; i++) {
+        const id = `${reqs[i].requirementId}-${i}`;
+        const selCount = autoSelections[id]?.length || 0;
+        if (selCount === 0) {
+          autoExpanded[id] = true;
+        }
+      }
+      if (Object.keys(autoExpanded).length === 0 && reqs.length > 0) {
+        autoExpanded[`${reqs[0].requirementId}-0`] = true;
+      }
+      setExpanded(autoExpanded);
     } finally {
       setLoading(false);
     }
@@ -1322,6 +1845,24 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
       }
       return { ...prev, [sId]: [...current, code] };
     });
+  };
+
+  const handleAutofill = () => {
+    const newSelections = { ...selections };
+    requirements.forEach((req, index) => {
+      const id = `${req.requirementId}-${index}`;
+      const needed = parseRequiredCount(req.description_rule);
+      const current = (newSelections[id] || []).length;
+      if (current < needed) {
+        const toAdd = needed - current;
+        const available = flattenActiveCourses(req).filter(c => c.code && !(newSelections[id] || []).includes(c.code));
+        newSelections[id] = [
+          ...(newSelections[id] || []),
+          ...available.slice(0, toAdd).map(c => c.code!)
+        ];
+      }
+    });
+    setSelections(newSelections);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1350,13 +1891,24 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
       }
     }
 
-    // Fire async scaffold
-    const planId = (typeof window !== 'undefined' && sessionStorage.getItem('gradPlanId')) || crypto.randomUUID();
-    if (typeof window !== 'undefined') sessionStorage.setItem('gradPlanId', planId);
-    fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: 'genEd', courses: genEdCourses }) }).catch(console.error);
+    // Fire async scaffold using useChat stream
+    const preferences: any = getLatestPreferencesFromMessages(messages || []);
+
+    if (scaffoldChat) {
+      scaffoldChat.sendMessage(
+        { text: 'Please distribute Gen Ed courses into my plan' },
+        { body: { planId, phase: 'genEd', courses: genEdCourses, preferences } }
+      );
+    } else {
+      fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: 'genEd', courses: genEdCourses }) }).then(res => res.json()).then(data => {
+        if (data.scaffold && onScaffoldUpdated) {
+          onScaffoldUpdated(data.scaffold);
+        }
+      }).catch(console.error);
+    }
 
     addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { catalogYear: year, genEdSelections: selections } });
-    sendMessage({ text: '[System: Gen Ed course selections submitted. Now immediately call getStudentTranscript - do not ask the user, just invoke the tool.]' });
+    sendMessage({ text: '[System: Gen Ed course selections submitted. Do not call requestUserPreferences. Now build the graduation plan in the Playground: use `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm` to place all remaining courses. Run `checkPlanHeuristics`; if there are warnings or unplanned courses, fix them and re-run. Repeat until clean, then call `addMilestones`. After milestones are inserted, call `requestPlanReview`.]' });
   };
 
   const filledCount = Object.values(selections).flat().length;
@@ -1401,7 +1953,14 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
   return (
     <div className="mt-4 w-[460px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Plan Your GE Courses</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Plan Your GE Courses</h3>
+          {process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' && (
+            <button type="button" onClick={handleAutofill} className="text-[10px] font-medium bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded shadow-sm transition-colors">
+              Auto-fill (Dev)
+            </button>
+          )}
+        </div>
         <p className="text-xs text-zinc-500 mt-1">
           {year === 'pre-2024' ? 'Pre-2024' : '2024+'} catalog · {filledCount} courses selected
         </p>
@@ -1412,7 +1971,7 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="max-h-[480px] overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
+        <div className="max-h-[600px] overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
           {requirements.map((req, index) => {
             const id = `${req.requirementId}-${index}`;
             const isOpen = !!expanded[id];
@@ -1426,9 +1985,9 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
               : allCourses;
 
             return (
-              <div key={id}>
+              <div key={id} className={`transition-colors border-l-4 ${isReqMet ? 'border-l-emerald-500 bg-white dark:bg-zinc-950' : currentSelections.length > 0 ? 'border-l-black dark:border-l-white bg-white dark:bg-zinc-950' : 'border-l-transparent bg-zinc-50/80 dark:bg-zinc-900/30'}`}>
                 <button type="button" onClick={() => toggleExpand(id)}
-                  className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
+                  className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className={`shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${isReqMet ? 'border-emerald-500 bg-emerald-500 text-white' : currentSelections.length > 0 ? 'border-black bg-black dark:border-white dark:bg-white text-white dark:text-black' : 'border-zinc-300 dark:border-zinc-700'}`}>
                       {(isReqMet || currentSelections.length > 0) && <CheckCircle2 size={12} strokeWidth={3} />}
@@ -1458,12 +2017,12 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, transcriptCourse
                     )}
 
                     <div className="space-y-1 max-h-52 overflow-y-auto pr-1">
-                      {visible.map(course => {
+                      {visible.map((course, i) => {
                         const isCompleted = course.code ? isCourseCompleted(course.code) : false;
                         const isSelected = course.code ? currentSelections.includes(course.code) : false;
 
                         return (
-                          <label key={`${id}-${course.code}`}
+                          <label key={`${id}-${course.code}-${i}`}
                             className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-all text-xs ${isSelected ? 'border-black bg-zinc-50 dark:border-white dark:bg-zinc-900' : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700'}`}>
                             {reqCount === 1 ? (
                               <input type="radio" name={`req-${id}`} value={course.code ?? ''}
@@ -1564,8 +2123,11 @@ interface ProgramReq {
   otherRequirement?: string;
 }
 
-function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, transcriptCourses: transcriptCoursesProp }: { tool: any; addToolOutput: any; sendMessage: any; type: 'major' | 'minor'; transcriptCourses: any[] }) {
+function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, type, studentType, transcriptCourses: transcriptCoursesProp, onScaffoldUpdated, scaffoldChat, messages }: { tool: any; addToolOutput: any; sendMessage: any; planId: string; type: 'major' | 'minor' | 'graduate_no_gen_ed'; studentType: StudentType; transcriptCourses: any[]; onScaffoldUpdated?: (scaffold: any) => void; scaffoldChat?: any, messages: any[] }) {
   const programName: string = tool.args?.programName ?? '';
+  const requirementsType = type === "graduate_no_gen_ed" ? "graduate_no_gen_ed" : type;
+  const displayProgramLabel = type === "graduate_no_gen_ed" ? "Graduate Program" : type === "major" ? "Major" : "Minor";
+  const scaffoldPhase = type === "minor" ? "minor" : "major";
   const [requirements, setRequirements] = useState<ProgramReq[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -1615,7 +2177,7 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
     setFetchError(null);
     (async () => {
       try {
-        const res = await fetch(`/api/program-requirements?program=${encodeURIComponent(stableProgramName)}&type=${type}`);
+        const res = await fetch(`/api/program-requirements?program=${encodeURIComponent(stableProgramName)}&type=${requirementsType}`);
         if (cancelled) return;
         if (!res.ok) throw new Error('Failed to load requirements');
         const data = await res.json();
@@ -1683,6 +2245,26 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
     });
   }
 
+  const handleAutofill = () => {
+    const newSelections = { ...selections };
+    requirements.forEach(req => {
+      for (const slot of getSlots(req)) {
+        const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
+        const { required } = parseSlotInfo(slot.label, activeCourses.length);
+        const current = (newSelections[slot.id] || []).length;
+        if (current < required) {
+          const toAdd = required - current;
+          const available = activeCourses.filter(c => !(newSelections[slot.id] || []).includes(c.code));
+          newSelections[slot.id] = [
+            ...(newSelections[slot.id] || []),
+            ...available.slice(0, toAdd).map(c => c.code)
+          ];
+        }
+      }
+    });
+    setSelections(newSelections);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitted) return;
@@ -1694,21 +2276,40 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
         const codes = selections[slot.id] ?? [];
         for (const code of codes) {
           const c = slot.courses.find(x => x.code === code);
-          if (c) selectedCourses.push({ ...c, source: type, requirementId: slot.id, requirementDescription: slot.label, fromTranscript: isCourseCompleted(c.code) });
+          if (c) {
+            selectedCourses.push({
+              ...c,
+              source: type === 'minor' ? 'minor' : 'major',
+              requirementId: slot.id,
+              requirementDescription: slot.label,
+              fromTranscript: isCourseCompleted(c.code),
+            });
+          }
         }
       }
     }
 
-    // Fire async scaffold
-    const planId = (typeof window !== 'undefined' && sessionStorage.getItem('gradPlanId')) || crypto.randomUUID();
-    if (typeof window !== 'undefined') sessionStorage.setItem('gradPlanId', planId);
-    fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: type, courses: selectedCourses }) }).catch(console.error);
+    // Fire async scaffold via streaming hook
+    const preferences: any = getLatestPreferencesFromMessages(messages || []);
+
+    if (scaffoldChat) {
+      scaffoldChat.sendMessage(
+        { text: `Please distribute ${type} courses into my plan` },
+        { body: { planId, phase: scaffoldPhase, courses: selectedCourses, preferences } }
+      );
+    } else {
+      fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: scaffoldPhase, courses: selectedCourses }) }).catch(console.error);
+    }
 
     addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { programName, selectedCourses, courseCount: selectedCourses.length } });
 
-    const next = type === 'major'
-      ? "[System: Major course selections submitted. Now immediately call requestMinorSelection - do not ask the user, just invoke the tool.]"
-      : "[System: Minor course selections submitted. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]";
+    const next = type === 'graduate_no_gen_ed'
+      ? "[System: Graduate program course selections submitted. Do not call requestMinorSelection or selectGenEdCourses. Now build the graduation plan in the Playground: use `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm` to place all remaining courses. Run `checkPlanHeuristics`; if there are warnings or unplanned courses, fix them and re-run. Repeat until clean, then call `addMilestones`.]"
+      : type === 'major'
+        ? "[System: Major course selections submitted. Now immediately call requestMinorSelection - do not ask the user, just invoke the tool.]"
+        : studentType === 'honors'
+          ? "[System: Minor course selections submitted for an honors student. Now immediately call requestHonorsSelection - do not ask the user, just invoke the tool.]"
+          : "[System: Minor course selections submitted. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]";
     sendMessage({ text: next });
   };
 
@@ -1731,7 +2332,7 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
     return (
       <div className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
         <CheckCircle2 size={14} />
-        {type === 'major' ? 'Major' : 'Minor'} course selections submitted ({filledCount} courses)
+        {displayProgramLabel} course selections submitted ({filledCount} courses)
       </div>
     );
   }
@@ -1754,7 +2355,14 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
   return (
     <div className="mt-4 w-[500px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Select {type === 'major' ? 'Major' : 'Minor'} Courses</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Select {displayProgramLabel} Courses</h3>
+          {process.env.NEXT_PUBLIC_SHOW_DEBUG_TOOLS === 'true' && (
+            <button type="button" onClick={handleAutofill} className="text-[10px] font-medium bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 rounded shadow-sm transition-colors">
+              Auto-fill (Dev)
+            </button>
+          )}
+        </div>
         <p className="text-xs text-zinc-500 mt-1">{programName} &middot; {filledCount} courses selected</p>
         <div className="mt-2 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
           <div className="h-1.5 rounded-full bg-black dark:bg-white transition-all" style={{ width: `${totalSlots > 0 ? Math.min(100, (filledCount / totalSlots) * 100) : 0}%` }} />
@@ -1818,13 +2426,13 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
                               className="w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white" />
                           )}
                           <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                            {vis.map(c => {
+                            {vis.map((c, i) => {
                               const isSelected = sel.includes(c.code);
                               const isFromTranscript = isCourseCompleted(c.code);
                               const isDisabled = isAutoAll; // Can't deselect auto-all
 
                               return (
-                                <label key={`${slot.id}-${c.code}`}
+                                <label key={`${slot.id}-${c.code}-${i}`}
                                   className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-all text-xs ${isDisabled ? 'cursor-default' : 'cursor-pointer'} ${isSelected ? 'border-black bg-zinc-50 dark:border-white dark:bg-zinc-900' : 'border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700'}`}>
                                   <input
                                     type="checkbox"
@@ -1881,7 +2489,7 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
             onClick={() => {
               setSubmitted(true);
               addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "skipped" } });
-              sendMessage({ text: `[System: User chose to skip selecting courses for ${type === 'major' ? 'Major' : 'Minor'}. Check with them on how they want to proceed or move to the next step.]` });
+              sendMessage({ text: `[System: User chose to skip selecting courses for ${displayProgramLabel}. Check with them on how they want to proceed or move to the next step.]` });
             }}
             className="w-full rounded-xl py-3 text-sm font-medium transition-all text-zinc-500 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800"
           >
@@ -1892,5 +2500,3 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, type, tr
     </div>
   );
 }
-
-
