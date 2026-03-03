@@ -45,6 +45,7 @@ export function ProgramCourseSelectionForm({
 }) {
     const programName: string = tool.args?.programName ?? "";
     const [requirements, setRequirements] = useState<ProgramReq[]>([]);
+    const [programId, setProgramId] = useState<string | number | null>(null);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
     const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -108,6 +109,11 @@ export function ProgramCourseSelectionForm({
                     if (cancelled) return;
                     if (!res.ok) throw new Error("Failed to load requirements");
                     const data = await res.json();
+                    setProgramId(
+                        data?.programId !== undefined && data?.programId !== null
+                            ? data.programId
+                            : null
+                    );
                     reqs = data.programRequirements ?? [];
                 }
 
@@ -203,13 +209,14 @@ export function ProgramCourseSelectionForm({
                 const codes = selections[slot.id] ?? [];
                 for (const code of codes) {
                     const c = slot.courses.find((x) => x.code === code);
-                    if (c)
+                    if (c && !isCourseCompleted(c.code))
                         selectedCourses.push({
                             ...c,
                             source: type,
                             requirementId: slot.id,
                             requirementDescription: slot.label,
-                            fromTranscript: isCourseCompleted(c.code),
+                            programId: programId != null ? String(programId) : undefined,
+                            fromTranscript: false,
                         });
                 }
             }
@@ -238,6 +245,7 @@ export function ProgramCourseSelectionForm({
             toolCallId: tool.toolCallId,
             output: {
                 programName,
+                programId: programId != null ? String(programId) : undefined,
                 selectedCourses,
                 courseCount: selectedCourses.length,
             },
@@ -253,6 +261,19 @@ export function ProgramCourseSelectionForm({
     const filledCount = Object.values(selections)
         .flat()
         .filter(Boolean).length;
+    const plannableFilledCount = requirements.reduce((total, req) => {
+        let count = 0;
+        for (const slot of getSlots(req)) {
+            const codes = selections[slot.id] ?? [];
+            for (const code of codes) {
+                const c = slot.courses.find((x) => x.code === code);
+                if (c && !isCourseCompleted(c.code)) {
+                    count += 1;
+                }
+            }
+        }
+        return total + count;
+    }, 0);
     const totalSlots = requirements.reduce(
         (n, r) => n + getSlots(r).length,
         0
@@ -276,7 +297,7 @@ export function ProgramCourseSelectionForm({
             <div className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/30 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
                 <CheckCircle2 size={14} />
                 {type === "major" ? "Major" : "Minor"} course selections submitted (
-                {filledCount} courses)
+                {plannableFilledCount} courses)
             </div>
         );
     }
@@ -318,7 +339,7 @@ export function ProgramCourseSelectionForm({
                     Select {type === "major" ? "Major" : "Minor"} Courses
                 </h3>
                 <p className="text-xs text-zinc-500 mt-1">
-                    {programName} &middot; {filledCount} courses selected
+                    {programName} &middot; {plannableFilledCount} courses selected
                 </p>
                 <div className="mt-2 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800">
                     <div
@@ -525,7 +546,7 @@ export function ProgramCourseSelectionForm({
                             }`}
                     >
                         {isFormComplete
-                            ? `Submit ${filledCount} Course${filledCount !== 1 ? "s" : ""
+                            ? `Submit ${plannableFilledCount} Course${plannableFilledCount !== 1 ? "s" : ""
                             }`
                             : `${unsatisfiedCount} requirement${unsatisfiedCount !== 1 ? "s" : ""
                             } left to fill`}

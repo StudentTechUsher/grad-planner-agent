@@ -6,7 +6,13 @@ import { generateText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { store, ScaffoldMilestone, ScaffoldState } from '../store';
 
-export type HeuristicViolationType = 'overMax' | 'underMin' | 'duplicateCourse' | 'unplannedCourse';
+export type HeuristicViolationType =
+  | 'overMax'
+  | 'underMin'
+  | 'duplicateCourse'
+  | 'unplannedCourse'
+  | 'missingPrerequisite'
+  | 'paceRule';
 
 export interface HeuristicViolation {
   type: HeuristicViolationType;
@@ -15,6 +21,9 @@ export interface HeuristicViolation {
   targetCredits?: number;
   deltaCredits?: number;
   courseCode?: string;
+  prerequisite?: string;
+  missingPrerequisites?: string[];
+  paceRule?: string;
 }
 
 export interface PlanHeuristicsSummary {
@@ -97,6 +106,212 @@ export const getDuplicateCourseViolations = (terms: ScaffoldState['terms']): Heu
   return violations;
 };
 
+const normalizeCourseCode = (code: string): string =>
+  code.replace(/\s+/g, '').toUpperCase();
+
+const extractCourseCodes = (text: string): string[] => {
+  const matches = text.toUpperCase().match(/\b[A-Z]{2,}(?:\s+[A-Z]{1,4}){0,2}\s*\d{3}[A-Z]?\b/g) ?? [];
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const match of matches) {
+    const normalized = normalizeCourseCode(match);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    deduped.push(normalized);
+  }
+  return deduped;
+};
+
+const parsePrerequisiteGroups = (prerequisite: string): string[][] => {
+  const cleaned = prerequisite
+    .replace(/[()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) return [];
+
+  const andSegments = cleaned.split(/\bAND\b|;|,/i).map((segment) => segment.trim()).filter(Boolean);
+  const groups: string[][] = [];
+
+  for (const segment of andSegments) {
+    const codes = extractCourseCodes(segment);
+    if (codes.length === 0) continue;
+
+    const hasOr = /\bOR\b|\/|\|/i.test(segment);
+    if (hasOr) {
+      groups.push(codes);
+      continue;
+    }
+
+    for (const code of codes) {
+      groups.push([code]);
+    }
+  }
+
+  return groups;
+};
+
+const getPrerequisiteViolations = (state: ScaffoldState): HeuristicViolation[] => {
+  const violations: HeuristicViolation[] = [];
+  const completedCourseCodes = new Set(
+    (state.completedCourseCodes ?? []).map((code) => normalizeCourseCode(code)),
+  );
+
+  // Build a lookup so prerequisites can be read from either term courses or allCourses metadata.
+  const courseMetadataByCode = new Map<string, ScaffoldState['allCourses'][number]>();
+  for (const course of state.allCourses) {
+    const key = normalizeCourseCode(course.code);
+    if (!courseMetadataByCode.has(key)) {
+      courseMetadataByCode.set(key, course);
+    }
+  }
+
+  const earliestTermByCourseCode = new Map<string, number>();
+  for (let termIndex = 0; termIndex < state.terms.length; termIndex++) {
+    for (const course of state.terms[termIndex].courses) {
+      const code = normalizeCourseCode(course.code);
+      const existing = earliestTermByCourseCode.get(code);
+      if (existing === undefined || termIndex < existing) {
+        earliestTermByCourseCode.set(code, termIndex);
+      }
+    }
+  }
+
+  for (let termIndex = 0; termIndex < state.terms.length; termIndex++) {
+    const term = state.terms[termIndex];
+    for (const course of term.courses) {
+      const courseCode = normalizeCourseCode(course.code);
+      const metadata = courseMetadataByCode.get(courseCode);
+      const prerequisite = typeof course.prerequisite === 'string'
+        ? course.prerequisite
+        : typeof metadata?.prerequisite === 'string'
+          ? metadata.prerequisite
+          : '';
+      if (!prerequisite) continue;
+
+      const prerequisiteGroups = parsePrerequisiteGroups(prerequisite);
+      if (prerequisiteGroups.length === 0) continue;
+
+      const unmetGroups = prerequisiteGroups.filter((group) => {
+        const groupSatisfied = group.some((requiredCode) => {
+          if (completedCourseCodes.has(requiredCode)) return true;
+
+          const plannedTermIndex = earliestTermByCourseCode.get(requiredCode);
+          return typeof plannedTermIndex === 'number' && plannedTermIndex < termIndex;
+        });
+
+        return !groupSatisfied;
+      });
+
+      if (unmetGroups.length === 0) continue;
+
+      violations.push({
+        type: 'missingPrerequisite',
+        termName: term.term,
+        courseCode: course.code,
+        prerequisite,
+        missingPrerequisites: unmetGroups.map((group) => group.join(' OR ')),
+      });
+    }
+  }
+
+  return violations;
+};
+
+type ParsedTerm = {
+  raw: string;
+  season: 'fall' | 'winter' | 'spring' | 'summer';
+  year: number;
+};
+
+const parseTerm = (termName: string): ParsedTerm | null => {
+  const normalized = termName.trim();
+  const match = normalized.match(/\b(fall|winter|spring|summer)(?:\s+semester)?\s+(\d{4})\b/i);
+  if (!match) return null;
+
+  const season = match[1].toLowerCase() as ParsedTerm['season'];
+  const year = Number(match[2]);
+  if (!Number.isFinite(year)) return null;
+
+  return { raw: termName, season, year };
+};
+
+const isShortTerm = (parsed: ParsedTerm): boolean =>
+  parsed.season === 'spring' || parsed.season === 'summer';
+
+const toTermOrdinal = (parsed: ParsedTerm): number => {
+  // Calendar progression where Fall -> Winter(next year) is +1.
+  const seasonOffset: Record<ParsedTerm['season'], number> = {
+    winter: 0,
+    spring: 1,
+    summer: 2,
+    fall: 3,
+  };
+  return parsed.year * 4 + seasonOffset[parsed.season];
+};
+
+const getPaceViolations = (state: ScaffoldState): HeuristicViolation[] => {
+  const violations: HeuristicViolation[] = [];
+  const pace = state.preferences.graduationPace;
+
+  const nonEmptyTerms = state.terms
+    .filter((term) => Array.isArray(term.courses) && term.courses.length > 0)
+    .map((term) => ({ termName: term.term, parsed: parseTerm(term.term) }))
+    .filter((entry): entry is { termName: string; parsed: ParsedTerm } => entry.parsed !== null);
+
+  if (nonEmptyTerms.length < 2) return violations;
+
+  if (pace === 'fast') {
+    for (let i = 1; i < nonEmptyTerms.length; i++) {
+      const prev = nonEmptyTerms[i - 1];
+      const curr = nonEmptyTerms[i];
+      const gap = toTermOrdinal(curr.parsed) - toTermOrdinal(prev.parsed) - 1;
+      if (gap > 0) {
+        violations.push({
+          type: 'paceRule',
+          termName: curr.termName,
+          paceRule: `ASAP pace cannot skip terms. Gap detected between ${prev.termName} and ${curr.termName}.`,
+        });
+      }
+    }
+    return violations;
+  }
+
+  if (pace === 'sustainable') {
+    const lastTwoStart = Math.max(0, nonEmptyTerms.length - 2);
+    for (let i = 0; i < nonEmptyTerms.length; i++) {
+      const entry = nonEmptyTerms[i];
+      if (!isShortTerm(entry.parsed)) continue;
+      if (i < lastTwoStart) {
+        violations.push({
+          type: 'paceRule',
+          termName: entry.termName,
+          paceRule: `Sustainable pace should prioritize Fall/Winter first. ${entry.termName} appears too early.`,
+        });
+      }
+    }
+    return violations;
+  }
+
+  if (pace === 'undecided') {
+    const hasMajorDecision =
+      state.phases.includes('major') || state.allCourses.some((course) => course.source === 'major');
+
+    if (!hasMajorDecision) {
+      for (const entry of nonEmptyTerms) {
+        if (!isShortTerm(entry.parsed)) continue;
+        violations.push({
+          type: 'paceRule',
+          termName: entry.termName,
+          paceRule: `Undecided pace disallows Spring/Summer terms until a major is chosen.`,
+        });
+      }
+    }
+  }
+
+  return violations;
+};
+
 export const evaluatePlanHeuristics = (state: ScaffoldState): PlanHeuristicsSummary => {
   const warnings: string[] = [];
   const violations: HeuristicViolation[] = [];
@@ -148,6 +363,21 @@ export const evaluatePlanHeuristics = (state: ScaffoldState): PlanHeuristicsSumm
     violations.push(duplicate);
   }
 
+  const prerequisiteViolations = getPrerequisiteViolations(state);
+  for (const prerequisiteViolation of prerequisiteViolations) {
+    const missing = prerequisiteViolation.missingPrerequisites?.join('; ') ?? prerequisiteViolation.prerequisite ?? 'unknown prerequisite';
+    warnings.push(
+      `Course ${prerequisiteViolation.courseCode} in ${prerequisiteViolation.termName} has unmet prerequisite(s): ${missing}.`,
+    );
+    violations.push(prerequisiteViolation);
+  }
+
+  const paceViolations = getPaceViolations(state);
+  for (const paceViolation of paceViolations) {
+    warnings.push(paceViolation.paceRule ?? `Pace rule violated in ${paceViolation.termName}.`);
+    violations.push(paceViolation);
+  }
+
   if (totalUnplanned > 0) {
     warnings.push(`${totalUnplanned} selected course(s) are not placed in any term.`);
     for (const course of remainingCourses) {
@@ -180,6 +410,7 @@ export const getAgentTools = (planId: string) => {
     if (!Array.isArray(nextState.terms)) nextState.terms = [];
     if (!Array.isArray(nextState.allCourses)) nextState.allCourses = [];
     if (!Array.isArray(nextState.milestones)) nextState.milestones = [];
+    if (!Array.isArray(nextState.selectedProgramIds)) nextState.selectedProgramIds = [];
     return nextState;
   };
   const insertMilestoneInState = (
@@ -258,11 +489,11 @@ export const getAgentTools = (planId: string) => {
       inputSchema: z.object({}),
     },
     requestMajorSelection: {
-      description: 'Ask the user to select their desired major. This will render a list for them to choose from. You must wait for the client to return the form submission.',
+      description: 'Ask the user to select their desired major(s). The form supports up to 2 majors and returns selectedPrograms/selectedProgramIds for sequential processing. You must wait for the client to return the form submission.',
       inputSchema: z.object({}),
     },
     requestMinorSelection: {
-      description: 'Ask the user to select their desired minor. You must wait for the client to return the form submission.',
+      description: 'Ask the user to select their desired minor(s). The form supports 0-3 minors and returns selectedPrograms/selectedProgramIds for sequential processing. You must wait for the client to return the form submission.',
       inputSchema: z.object({}),
     },
     requestHonorsSelection: {
@@ -278,12 +509,18 @@ export const getAgentTools = (planId: string) => {
       inputSchema: z.object({
         programName: z.string().describe('The exact program name, e.g. "Information Systems (BSIS)"'),
         programType: z.enum(['major', 'graduate_no_gen_ed']).optional().describe('Program type for requirement lookup. Use graduate_no_gen_ed for graduate students.'),
+        selectedPrograms: z.array(z.string()).optional().describe('Optional ordered list of all selected majors/programs for sequential processing.'),
+        selectedProgramIds: z.array(z.string()).optional().describe('Optional ordered list of selected program IDs aligned to selectedPrograms.'),
+        currentIndex: z.number().int().min(0).optional().describe('Optional zero-based index within selectedPrograms for the currently processed program.'),
       }),
     },
     selectMinorCourses: {
       description: 'Present the user with a per-requirement course selection form for their chosen minor program. You must wait for the client to submit. Skip this if the user has no minor.',
       inputSchema: z.object({
         programName: z.string().describe('The exact minor program name'),
+        selectedPrograms: z.array(z.string()).optional().describe('Optional ordered list of all selected minors for sequential processing.'),
+        selectedProgramIds: z.array(z.string()).optional().describe('Optional ordered list of selected minor IDs aligned to selectedPrograms.'),
+        currentIndex: z.number().int().min(0).optional().describe('Optional zero-based index within selectedPrograms for the currently processed minor.'),
       }),
     },
     selectGenEdCourses: {
@@ -509,7 +746,7 @@ export const getAgentTools = (planId: string) => {
       }
     },
     requestPlanReview: {
-      description: 'Ask the user to review the generated grad plan, choose to either download it or provide feedback to iterate on it.',
+      description: 'Ask the user to review the generated grad plan, then either save and return to Stuplanning or provide feedback to iterate.',
       inputSchema: z.object({}),
     },
     addMilestones: {
@@ -536,7 +773,7 @@ export const getAgentTools = (planId: string) => {
       }
     },
     createTerm: {
-      description: 'Create a new term (semester) in the graduation plan playground.',
+      description: 'Create a new term (semester) in the graduation plan playground, but only when there are still unplanned courses to place.',
       inputSchema: z.object({
         termName: z.string().describe('e.g., "Fall 2026"'),
       }),
@@ -545,8 +782,30 @@ export const getAgentTools = (planId: string) => {
         let state = rawState ? ensureCollections(rawState) : null;
         if (!state) return { error: 'Plan state not found.' };
 
+        const remaining = getRemainingCourses(state);
+        if (remaining.length === 0) {
+          return {
+            message: `No term created: all selected courses are already planned. Continue to milestones/review instead of creating an empty term.`,
+            plan: state.terms,
+            milestones: state.milestones,
+            needsHeuristicsRecheck: false,
+            totalUnplanned: 0,
+          };
+        }
+
         const exists = state.terms.find((t: any) => t.term === termName);
         if (exists) return { message: `Term ${termName} already exists.` };
+
+        const trailingTerm = state.terms[state.terms.length - 1];
+        if (trailingTerm && Array.isArray(trailingTerm.courses) && trailingTerm.courses.length === 0) {
+          return {
+            message: `No term created: the latest term "${trailingTerm.term}" is already empty. Fill or delete it before creating another term.`,
+            plan: state.terms,
+            milestones: state.milestones,
+            needsHeuristicsRecheck: false,
+            totalUnplanned: remaining.length,
+          };
+        }
 
         state.terms.push({ term: termName, courses: [], credits_planned: 0 });
         store.set(planId, state);
@@ -610,7 +869,8 @@ export const getAgentTools = (planId: string) => {
           title: z.string(),
           credits: z.number(),
           source: z.enum(['major', 'minor', 'genEd', 'placeholder']),
-          requirementId: z.string().optional()
+          requirementId: z.string().optional(),
+          prerequisite: z.string().optional(),
         }))
       }),
       execute: async ({ termName, courses }: { termName: string, courses: any[] }) => {

@@ -4,6 +4,8 @@ import { getAgentTools, evaluatePlanHeuristics, REQUIRED_MILESTONE_NAME } from '
 import fs from 'fs/promises';
 import path from 'path';
 import { store, ScaffoldCourse, ScaffoldState, StudentType } from '../store';
+import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
+import { captureServerEvent } from '@/lib/posthogServer';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -54,9 +56,21 @@ type UIMessageToolInvocation = {
 };
 
 type GenericObject = Record<string, unknown>;
+type ToolCallDebugMeta = {
+    toolCallId: string;
+    toolName: string;
+    messageIndex: number;
+    hasResult: boolean;
+};
 
 const isObject = (value: unknown): value is GenericObject =>
     typeof value === 'object' && value !== null;
+
+const isToolResultState = (state: unknown): boolean =>
+    state === 'result' || state === 'output-available';
+
+const hasToolResultPayload = (candidate: GenericObject): boolean =>
+    isToolResultState(candidate.state) || candidate.result !== undefined || candidate.output !== undefined;
 
 const safeCourse = (candidate: unknown, source: ScaffoldCourse['source']): ScaffoldCourse | null => {
     if (!isObject(candidate) || typeof candidate.code !== 'string') return null;
@@ -68,7 +82,39 @@ const safeCourse = (candidate: unknown, source: ScaffoldCourse['source']): Scaff
         requirementId: typeof candidate.requirementId === 'string' ? candidate.requirementId : undefined,
         requirementDescription: typeof candidate.requirementDescription === 'string' ? candidate.requirementDescription : undefined,
         programName: typeof candidate.programName === 'string' ? candidate.programName : undefined,
+        programId: typeof candidate.programId === 'string'
+            ? candidate.programId
+            : typeof candidate.programId === 'number'
+                ? String(candidate.programId)
+                : undefined,
+        prerequisite: typeof candidate.prerequisite === 'string'
+            ? candidate.prerequisite
+            : typeof candidate.prerequisites === 'string'
+                ? candidate.prerequisites
+                : undefined,
     };
+};
+
+const normalizeCourseCode = (value: string): string =>
+    value.replace(/\s+/g, '').toUpperCase();
+
+const getTranscriptCourseCode = (candidate: unknown): string | null => {
+    if (!isObject(candidate)) return null;
+
+    if (typeof candidate.code === 'string' && candidate.code.trim().length > 0) {
+        return normalizeCourseCode(candidate.code);
+    }
+
+    const subject = typeof candidate.subject === 'string' ? candidate.subject.trim() : '';
+    const numberCandidate = candidate.number;
+    const number = typeof numberCandidate === 'string'
+        ? numberCandidate.trim()
+        : typeof numberCandidate === 'number'
+            ? String(numberCandidate)
+            : '';
+
+    if (!subject || !number) return null;
+    return normalizeCourseCode(`${subject}${number}`);
 };
 
 const normalizeStudentType = (value: unknown): StudentType => {
@@ -100,6 +146,85 @@ const extractToolInvocations = (message: unknown): UIMessageToolInvocation[] => 
         }];
     });
 };
+
+const collectToolCallDebugMeta = (messages: unknown[]): Map<string, ToolCallDebugMeta> => {
+    const byId = new Map<string, ToolCallDebugMeta>();
+
+    for (let messageIndex = 0; messageIndex < messages.length; messageIndex += 1) {
+        const message = messages[messageIndex];
+        if (!isObject(message)) continue;
+
+        if (Array.isArray(message.toolInvocations)) {
+            for (const invocation of message.toolInvocations) {
+                if (!isObject(invocation) || typeof invocation.toolCallId !== 'string' || !invocation.toolCallId) continue;
+                const toolCallId = invocation.toolCallId;
+                const toolName = typeof invocation.toolName === 'string' && invocation.toolName.length > 0
+                    ? invocation.toolName
+                    : 'unknown';
+                const hasResult = hasToolResultPayload(invocation);
+
+                const existing = byId.get(toolCallId);
+                if (!existing) {
+                    byId.set(toolCallId, { toolCallId, toolName, messageIndex, hasResult });
+                    continue;
+                }
+
+                if (!existing.hasResult && hasResult) existing.hasResult = true;
+                if (existing.toolName === 'unknown' && toolName !== 'unknown') existing.toolName = toolName;
+            }
+        }
+
+        if (!Array.isArray(message.parts)) continue;
+        for (const part of message.parts) {
+            if (!isObject(part) || typeof part.toolCallId !== 'string' || !part.toolCallId) continue;
+            if (typeof part.type !== 'string') continue;
+            if (!part.type.startsWith('tool-') && part.type !== 'tool-call') continue;
+
+            const toolCallId = part.toolCallId;
+            const toolName = typeof part.toolName === 'string' && part.toolName.length > 0
+                ? part.toolName
+                : part.type.replace('tool-', '') || 'unknown';
+            const hasResult = hasToolResultPayload(part);
+
+            const existing = byId.get(toolCallId);
+            if (!existing) {
+                byId.set(toolCallId, { toolCallId, toolName, messageIndex, hasResult });
+                continue;
+            }
+
+            if (!existing.hasResult && hasResult) existing.hasResult = true;
+            if (existing.toolName === 'unknown' && toolName !== 'unknown') existing.toolName = toolName;
+        }
+    }
+
+    return byId;
+};
+
+const sanitizeMessagesForModel = (messages: unknown[]): unknown[] =>
+    messages.map((message) => {
+        if (!isObject(message)) return message;
+        const nextMessage: GenericObject = { ...message };
+
+        if (Array.isArray(message.toolInvocations)) {
+            nextMessage.toolInvocations = message.toolInvocations.filter((invocation) => {
+                if (!isObject(invocation)) return true;
+                if (typeof invocation.toolCallId !== 'string' || !invocation.toolCallId) return true;
+                return hasToolResultPayload(invocation);
+            });
+        }
+
+        if (Array.isArray(message.parts)) {
+            nextMessage.parts = message.parts.filter((part) => {
+                if (!isObject(part)) return true;
+                if (typeof part.type !== 'string') return true;
+                if (!part.type.startsWith('tool-') && part.type !== 'tool-call') return true;
+                if (typeof part.toolCallId !== 'string' || !part.toolCallId) return true;
+                return hasToolResultPayload(part);
+            });
+        }
+
+        return nextMessage;
+    });
 
 const getMessageText = (message: unknown): string => {
     if (!isObject(message)) return '';
@@ -187,8 +312,19 @@ const getLatestHeuristicsFromSteps = (steps: unknown[]): { isPlanSound: boolean;
 const hasRequiredMilestone = (milestones: ScaffoldState['milestones']): boolean =>
     milestones.some((milestone) => milestone.title.toLowerCase() === REQUIRED_MILESTONE_NAME.toLowerCase());
 
-const createInitialState = (planId: string): ScaffoldState => ({
+const addProgramIdCandidate = (target: Set<string>, candidate: unknown): void => {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+        target.add(candidate.trim());
+        return;
+    }
+    if (typeof candidate === 'number' && Number.isFinite(candidate)) {
+        target.add(String(candidate));
+    }
+};
+
+const createInitialState = (planId: string, userId: string): ScaffoldState => ({
     planId,
+    userId,
     createdAt: Date.now(),
     hasPreferencesSet: false,
     preferences: {
@@ -203,12 +339,21 @@ const createInitialState = (planId: string): ScaffoldState => ({
     terms: [],
     milestones: [],
     allCourses: [],
+    selectedProgramIds: [],
+    completedCourseCodes: [],
 });
 
 // Load BYU institutional context lazily
 let byuContext: string | null = null;
 
 export async function POST(req: Request) {
+    const session = await getAgentSessionFromRequest(req);
+    if (!session) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const jsonWithSession = (body: unknown, init?: ResponseInit) =>
+        withRefreshedAgentSession(Response.json(body, init), session);
+
     if (byuContext === null) {
         try {
             const raw = await fs.readFile(path.join(process.cwd(), 'byu-context.json'), 'utf-8');
@@ -220,9 +365,19 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const url = new URL(req.url);
-    const planId = url.searchParams.get('planId') || 'default-plan-id';
-    console.log("RECEIVED BODY:", JSON.stringify(body, null, 2));
-    const messages = body.messages || [];
+    const planIdFromQuery = url.searchParams.get('planId');
+    const bodyPlanId = isObject(body) && typeof body.planId === 'string' ? body.planId : null;
+    const bodyChatId = isObject(body) && typeof body.id === 'string' ? body.id : null;
+    const normalizedBodyChatId = bodyChatId
+        ? bodyChatId.startsWith('chat-')
+            ? bodyChatId.slice('chat-'.length)
+            : bodyChatId
+        : null;
+    const planId = planIdFromQuery || bodyPlanId || normalizedBodyChatId;
+    if (!planId) {
+        return jsonWithSession({ error: 'planId is required (query ?planId=..., body.planId, or body.id).' }, { status: 400 });
+    }
+    const messages = Array.isArray(body.messages) ? body.messages : [];
     const latestUserMessage = [...messages].reverse().find((msg) => isObject(msg) && msg.role === 'user');
     const latestUserText = getMessageText(latestUserMessage).toLowerCase();
     const userRequestedPreferenceUpdate =
@@ -231,13 +386,56 @@ export async function POST(req: Request) {
             /(update|change|edit|modify)/.test(latestUserText) &&
             /(preference|preferences|credit|credits|pace|gen ed|gened)/.test(latestUserText)
         );
-    const coreMessages = await convertToModelMessages(messages);
+    const sanitizedMessages = sanitizeMessagesForModel(messages);
+    let coreMessages: Awaited<ReturnType<typeof convertToModelMessages>>;
+    try {
+        coreMessages = await convertToModelMessages(sanitizedMessages);
+    } catch (error) {
+        const errorWithIds = error as { toolCallIds?: unknown };
+        const missingToolCallIds = Array.isArray(errorWithIds?.toolCallIds)
+            ? errorWithIds.toolCallIds.filter((value): value is string => typeof value === 'string')
+            : [];
+        const toolCallMeta = collectToolCallDebugMeta(messages);
+        const missingToolCalls = missingToolCallIds.map((toolCallId) => {
+            const meta = toolCallMeta.get(toolCallId);
+            return {
+                toolCallId,
+                toolName: meta?.toolName || 'unknown',
+                messageIndex: meta?.messageIndex ?? -1,
+            };
+        });
+
+        if (missingToolCallIds.length > 0) {
+            void captureServerEvent('chat_missing_tool_results', 'warn', {
+                route: '/api/chat',
+                request: req,
+                distinctId: session.userId,
+                properties: { missingToolCalls },
+            });
+            return jsonWithSession(
+                {
+                    error: 'Tool result is missing for one or more tool calls.',
+                    missingToolCalls,
+                },
+                { status: 400 },
+            );
+        }
+
+        throw error;
+    }
     const hasAnyToolHistory = messages.some((msg: unknown) => extractToolInvocations(msg).length > 0);
 
     // Hydrate the in-memory store from conversation history
     let state = store.get(planId);
+    if (state?.userId && state.userId !== session.userId) {
+        return jsonWithSession({ error: 'Forbidden: plan ownership mismatch.' }, { status: 403 });
+    }
+    if (state && !state.userId) {
+        state.userId = session.userId;
+    }
+
     if (!state || !hasAnyToolHistory) {
-        state = createInitialState(planId);
+        state = createInitialState(planId, session.userId);
         store.set(planId, state);
     }
 
@@ -245,6 +443,8 @@ export async function POST(req: Request) {
     state.preferences.studentType = normalizeStudentType(state.preferences.studentType);
 
     const discoveredCourses: ScaffoldState['allCourses'] = [];
+    const discoveredCompletedCourseCodes = new Set<string>();
+    const discoveredProgramIds = new Set<string>();
     let hasGenEdSelections = false;
     let hasMilestoneSelections = false;
     let latestPlanFromHistory: ScaffoldState['terms'] | null = null;
@@ -262,8 +462,33 @@ export async function POST(req: Request) {
                 state.preferences = { ...state.preferences, ...preferencePatch };
                 if (Array.isArray(t.result.transcriptCourses)) {
                     for (const c of t.result.transcriptCourses) {
-                        const parsedCourse = safeCourse(c, 'placeholder');
-                        if (parsedCourse) discoveredCourses.push(parsedCourse);
+                        const completedCourseCode = getTranscriptCourseCode(c);
+                        if (completedCourseCode) {
+                            discoveredCompletedCourseCodes.add(completedCourseCode);
+                        }
+                    }
+                }
+            }
+            if (isObject(t.result)) {
+                addProgramIdCandidate(discoveredProgramIds, t.result.programId);
+                addProgramIdCandidate(discoveredProgramIds, t.result.selectedProgramId);
+
+                if (Array.isArray(t.result.programIds)) {
+                    for (const programId of t.result.programIds) {
+                        addProgramIdCandidate(discoveredProgramIds, programId);
+                    }
+                }
+
+                if (Array.isArray(t.result.selectedProgramIds)) {
+                    for (const programId of t.result.selectedProgramIds) {
+                        addProgramIdCandidate(discoveredProgramIds, programId);
+                    }
+                }
+
+                if (Array.isArray(t.result.selectedCourses)) {
+                    for (const selectedCourse of t.result.selectedCourses) {
+                        if (!isObject(selectedCourse)) continue;
+                        addProgramIdCandidate(discoveredProgramIds, selectedCourse.programId);
                     }
                 }
             }
@@ -307,18 +532,38 @@ export async function POST(req: Request) {
         }
     }
 
-    // Deduplicate discovered courses
-    const uniqueCourses = [];
-    const seenCodes = new Set();
-    for (const c of discoveredCourses) {
-        if (!seenCodes.has(c.code)) {
-            seenCodes.add(c.code);
-            uniqueCourses.push(c);
-        }
+    // Merge discovered courses into existing course universe so we never drop courses
+    // when message history is partial/truncated on later turns.
+    const mergedCourseByCode = new Map<string, ScaffoldCourse>();
+    const existingCourses = Array.isArray(state.allCourses) ? state.allCourses : [];
+    for (const course of existingCourses) {
+        if (!course || typeof course.code !== 'string') continue;
+        mergedCourseByCode.set(normalizeCourseCode(course.code), course);
     }
-    state.allCourses = uniqueCourses;
+    for (const course of discoveredCourses) {
+        if (!course || typeof course.code !== 'string') continue;
+        // Prefer latest discovered metadata (e.g., requirement/prerequisite tags).
+        mergedCourseByCode.set(normalizeCourseCode(course.code), course);
+    }
+    state.allCourses = Array.from(mergedCourseByCode.values());
     state.terms = latestPlanFromHistory ?? state.terms;
     state.milestones = latestMilestonesFromHistory ?? state.milestones;
+    const mergedCompletedCodes = new Set<string>(
+        Array.isArray(state.completedCourseCodes)
+            ? state.completedCourseCodes.map((code: string) => normalizeCourseCode(code))
+            : [],
+    );
+    for (const code of discoveredCompletedCourseCodes) {
+        mergedCompletedCodes.add(code);
+    }
+    state.completedCourseCodes = Array.from(mergedCompletedCodes);
+    const mergedProgramIds = new Set<string>(
+        Array.isArray(state.selectedProgramIds) ? state.selectedProgramIds : [],
+    );
+    for (const programId of discoveredProgramIds) {
+        mergedProgramIds.add(programId);
+    }
+    state.selectedProgramIds = Array.from(mergedProgramIds);
     store.set(planId, state);
 
     const hydratedHeuristics = evaluatePlanHeuristics(state);
@@ -364,11 +609,14 @@ export async function POST(req: Request) {
                 return {};
             }
 
-            const latestStepHeuristics = getLatestHeuristicsFromSteps(steps);
-            const effectiveHeuristics = latestStepHeuristics ?? {
-                isPlanSound: hydratedHeuristics.isPlanSound,
-                totalUnplanned: hydratedHeuristics.totalUnplanned,
-                warningsCount: hydratedHeuristics.warnings.length,
+            // Always evaluate heuristics from current live store state to avoid stale
+            // decisions based on an old checkPlanHeuristics result.
+            const liveStateForHeuristics = store.get(planId) ?? state;
+            const liveHeuristics = evaluatePlanHeuristics(liveStateForHeuristics);
+            const effectiveHeuristics = {
+                isPlanSound: liveHeuristics.isPlanSound,
+                totalUnplanned: liveHeuristics.totalUnplanned,
+                warningsCount: liveHeuristics.warnings.length,
             };
             const isHeuristicsClean = effectiveHeuristics.isPlanSound && effectiveHeuristics.totalUnplanned === 0;
 
@@ -406,8 +654,10 @@ export async function POST(req: Request) {
                 return calledAddMilestones || completedAddMilestones;
             });
 
-            const liveState = store.get(planId);
-            const liveMilestones = liveState && Array.isArray(liveState.milestones) ? liveState.milestones : [];
+            const liveStateForMilestones = store.get(planId);
+            const liveMilestones = liveStateForMilestones && Array.isArray(liveStateForMilestones.milestones)
+                ? liveStateForMilestones.milestones
+                : [];
             let stepMilestones: ScaffoldState['milestones'] | null = null;
 
             for (const step of steps) {
@@ -467,16 +717,17 @@ export async function POST(req: Request) {
             "SPECIAL RULE: If the user explicitly asks to change preferences at any point, call updateUserPreferences and wait for submission. Then continue the current workflow step with the updated constraints. " +
             "STEP 2: Call requestMajorSelection. Wait for the user. This step is also used for graduate students, but it should select a graduate program. " +
             "   - Read preferences.studentType from STEP 1. If studentType is 'graduate', use graduate programs only (program_type='graduate_no_gen_ed'). " +
+            "   - requestMajorSelection may return selectedPrograms (up to 2). Always process them sequentially, one program at a time. " +
             "   - If result contains selectedProgram → program is set. Move immediately to STEP 3. " +
             "   - If result contains action='needsHelp' → call requestCareerQuestionnaire, wait for answers, " +
             "     then call queryPrograms with programType='graduate_no_gen_ed' when studentType='graduate', otherwise programType='major'. " +
             "     Then call presentMajorOptions with the 3 recommendedPrograms. Wait for the user to pick one. Then move to STEP 3. " +
-            "STEP 3: Call selectMajorCourses with programName set to the selected program. If studentType='graduate', pass programType='graduate_no_gen_ed'. Wait for submission. " +
+            "STEP 3: Call selectMajorCourses with programName set to the selected program. If requestMajorSelection returns selectedPrograms (array), process them sequentially: start index 0, pass selectedPrograms/selectedProgramIds/currentIndex, and repeat until all are completed. If studentType='graduate', pass programType='graduate_no_gen_ed'. Wait for each submission before continuing. " +
             "STEP 4: If studentType='graduate', skip STEPS 4-7 and go directly to STEP 8. Otherwise call requestMinorSelection and wait for submit/skip. " +
-            "STEP 5: If a minor was selected, call selectMinorCourses and wait. If skipped, continue. " +
+            "STEP 5: If minors were selected, call selectMinorCourses sequentially (same array/index pattern) until all selected minors are completed. If skipped, continue. " +
             "STEP 6: If studentType='honors', call requestHonorsSelection and wait for acknowledgment. " +
             "STEP 7: For non-graduate students, call selectGenEdCourses and wait for GE selections. " +
-            "STEP 8: Build the graduation plan visually in the Playground using `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm`. Do NOT use generateGradPlanScaffold. Run `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, perform minimal local fixes (move one course at a time; create the next chronological term only when needed), then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. " +
+            "STEP 8: Build the graduation plan visually in the Playground using `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm`. Do NOT use generateGradPlanScaffold. Pacing rules: if graduationPace='fast', use every term in sequence (Fall/Winter/Spring/Summer) with no skipped terms while courses remain; if graduationPace='sustainable', prefer Fall/Winter and only use Spring/Summer near the end to avoid waiting; if graduationPace='undecided', avoid Spring/Summer until a major is chosen. Run `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, perform minimal local fixes (move one course at a time; create the next chronological term only when needed), then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. " +
             "STEP 9: After STEP 8 is clean, call addMilestones and wait for user input. Then call insertMilestone for each selected milestone. `Apply For Graduation` is required and must be placed before the final semester. " +
             "STEP 10: Only after heuristics are clean, all selected courses are placed, and `Apply For Graduation` is inserted, call requestPlanReview. " +
             "   If the user wants to iterate, refine using tools then call requestPlanReview again. " +
@@ -486,5 +737,5 @@ export async function POST(req: Request) {
         tools: getAgentTools(planId),
     });
 
-    return result.toUIMessageStreamResponse();
+    return withRefreshedAgentSession(result.toUIMessageStreamResponse(), session);
 }

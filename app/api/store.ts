@@ -4,8 +4,10 @@ export interface ScaffoldCourse {
     credits: number;
     source: 'major' | 'minor' | 'genEd' | 'placeholder';
     programName?: string;
+    programId?: string;
     requirementId?: string;
     requirementDescription?: string;
+    prerequisite?: string;
 }
 
 export type StudentType = 'undergrad' | 'honors' | 'graduate';
@@ -25,6 +27,7 @@ export interface ScaffoldTerm {
 
 export interface ScaffoldState {
     planId: string;
+    userId: string;
     createdAt: number;
     hasPreferencesSet: boolean;
     preferences: {
@@ -40,12 +43,19 @@ export interface ScaffoldState {
     terms: ScaffoldTerm[];
     milestones: ScaffoldMilestone[];
     allCourses: ScaffoldCourse[];
+    selectedProgramIds: string[];
+    completedCourseCodes?: string[];
 }
 
 // Global in-memory store for dev. In prod, use Redis/DB.
-const globalStore = (global as any).gradStore || new Map<string, ScaffoldState>();
-if (!(global as any).gradStore) {
-    (global as any).gradStore = globalStore;
+type GlobalWithGradStore = typeof globalThis & {
+    gradStore?: Map<string, ScaffoldState>;
+};
+
+const globalWithGradStore = globalThis as GlobalWithGradStore;
+const globalStore = globalWithGradStore.gradStore ?? new Map<string, ScaffoldState>();
+if (!globalWithGradStore.gradStore) {
+    globalWithGradStore.gradStore = globalStore;
 }
 
 export const store = globalStore;

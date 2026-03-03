@@ -1,37 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# grad-planner-agent
 
-## Getting Started
+Agentic graduation planner application.
 
-First, run the development server:
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Required for core app:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `OPENAI_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
 
-## Learn More
+Required for cross-app authentication and persistence:
 
-To learn more about Next.js, take a look at the following resources:
+- `GRAD_PLANNER_HANDOFF_SECRET`
+- `AGENT_SESSION_SECRET`
+- `AGENT_SESSION_IDLE_TTL_SECONDS` (default: `900` / 15 minutes)
+- `AGENT_SESSION_ABSOLUTE_TTL_SECONDS` (default: `5400` / 90 minutes)
+- `AGENT_RELAUNCH_URL` (default: `https://app.stuplanning.com/grad-plan`; should be a browser-friendly URL)
+- `GRAD_PLANNER_HANDOFF_ISSUER` (default: `stuplanning-app`)
+- `GRAD_PLANNER_HANDOFF_AUDIENCE` (default: `grad-planner-agent`)
+- `SUPABASE_SERVICE_ROLE_KEY`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Optional telemetry (PostHog):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `POSTHOG_HOST` (or `NEXT_PUBLIC_POSTHOG_HOST`)
+- `POSTHOG_KEY` / `POSTHOG_API_KEY` (or `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_API_KEY`)
+- Telemetry is sent only when `NODE_ENV=production` and the request host is not localhost/127.0.0.1.
 
-## Deploy on Vercel
+Optional persistence config:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `AGENT_HANDOFFS_TABLE` (default: `agent_handoffs`)
+- `GRAD_PLAN_TABLE` (default: `grad_plan`)
+- `GRAD_PLAN_ID_COLUMN` (default: `id`)
+- `GRAD_PLAN_USER_COLUMN` (optional override; if omitted, app auto-detects ownership column in this order: `profile_id`, `student_id`, `user_id`)
+- `GRAD_PLAN_JSON_COLUMN` (default: `plan_details`)
+- `GRAD_PLAN_ACTIVE_COLUMN` (default: `is_active`)
+- `GRAD_PLAN_NAME_COLUMN` (default: `plan_name`)
+- `GRAD_PLAN_UPDATED_AT_COLUMN` (default: `updated_at`)
+- `GRAD_PLAN_PROGRAMS_COLUMN` (default: `programs_in_plan`)
+- `GRAD_PLAN_ACTIVE_RPC` (optional; when set, finalize will call RPC before fallback row insert)
+- `GRAD_PLAN_ACTIVE_RPC_STUDENT_PARAM` (default: `p_student_id`)
+- `GRAD_PLAN_ACTIVE_RPC_PLAN_PARAM` (default: `p_plan_details`)
+- `GRAD_PLAN_ACTIVE_RPC_PLAN_NAME_PARAM` (default: `p_plan_name`)
+- `GRAD_PLAN_ACTIVE_RPC_PROGRAMS_PARAM` (optional RPC arg name for program id array)
+- `GRAD_PLAN_RETURN_URL` (default: `https://app.stuplanning.com/grad-plan`)
+- `AGENT_PROFILES_TABLE` (default: `profiles`)
+- `AGENT_PROFILES_AUTH_USER_COLUMN` (default: `user_id`)
+- `AGENT_PROFILES_ID_COLUMN` (default: `id`)
+- `AGENT_PROFILES_STUDENT_ID_COLUMN` (optional fallback for schemas storing student id on profile rows)
+- `AGENT_STUDENT_TABLE` (default: `student`)
+- `AGENT_STUDENT_ID_COLUMN` (default: `id`)
+- `AGENT_STUDENT_AUTH_USER_COLUMN` (default: `user_id`; primary mapping from auth user -> student)
+- `AGENT_STUDENT_PROFILE_COLUMN` (optional fallback for schemas mapping student -> profile id)
+- `AGENT_USER_COURSES_TABLE` (default: `user_courses`)
+- `AGENT_USER_COURSES_USER_COLUMN` (default: `user_id`)
+- `AGENT_USER_COURSES_COURSES_COLUMN` (default: `courses`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# grad-planner-agent
+## New Auth Routes
+
+- `GET /auth/handoff` consumes one-time handoff token and issues `agent_session` cookie.
+- `GET /api/session/bootstrap` returns authenticated bootstrap context.
+- `GET /api/session/transcript-context` checks existing transcript courses for the authenticated user profile.
+- `POST /api/plan/finalize` validates plan heuristics, persists active plan, returns redirect URL.
+  - Request body: `{ planId: string, planName?: string }`
+
+## Stuplanning Integration
+
+See [`docs/stuplanning-agent-handoff-integration.md`](/Users/vinjones/grad-planner-agent/docs/stuplanning-agent-handoff-integration.md).

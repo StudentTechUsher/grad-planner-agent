@@ -7,15 +7,21 @@ const createdPlanIds: string[] = [];
 
 const mkPlanId = (): string => `test-plan-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-const mkCourse = (code: string, credits = 3): ScaffoldCourse => ({
+const mkCourse = (
+  code: string,
+  credits = 3,
+  overrides: Partial<ScaffoldCourse> = {},
+): ScaffoldCourse => ({
   code,
   title: code,
   credits,
   source: 'major',
+  ...overrides,
 });
 
 const mkState = (overrides: Partial<ScaffoldState> = {}): ScaffoldState => ({
   planId: overrides.planId ?? mkPlanId(),
+  userId: overrides.userId ?? 'test-user-id',
   createdAt: Date.now(),
   hasPreferencesSet: true,
   preferences: {
@@ -31,6 +37,8 @@ const mkState = (overrides: Partial<ScaffoldState> = {}): ScaffoldState => ({
   terms: overrides.terms ?? [],
   milestones: overrides.milestones ?? [],
   allCourses: overrides.allCourses ?? [],
+  selectedProgramIds: overrides.selectedProgramIds ?? [],
+  completedCourseCodes: overrides.completedCourseCodes ?? [],
 });
 
 const seedStore = (state: ScaffoldState): string => {
@@ -140,6 +148,142 @@ describe('evaluatePlanHeuristics', () => {
     expect(result.totalUnplanned).toBe(1);
     expect(result.violations.some((v) => v.type === 'unplannedCourse' && v.courseCode === 'IS 201')).toBe(true);
   });
+
+  it('flags unmet prerequisites when prerequisite is not earlier and not on transcript', () => {
+    const acc310 = mkCourse('ACC 310', 3);
+    const acc401 = mkCourse('ACC 401', 3, { prerequisite: 'ACC 310' });
+    const state = mkState({
+      terms: [
+        { term: 'Fall 2026', courses: [acc401], credits_planned: 3 },
+        { term: 'Winter 2027', courses: [acc310], credits_planned: 3 },
+      ],
+      allCourses: [acc310, acc401],
+      completedCourseCodes: [],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.isPlanSound).toBe(false);
+    expect(result.violations.some((v) => v.type === 'missingPrerequisite' && v.courseCode === 'ACC 401')).toBe(true);
+  });
+
+  it('accepts prerequisite when satisfied from transcript history', () => {
+    const acc401 = mkCourse('ACC 401', 3, { prerequisite: 'ACC 310' });
+    const state = mkState({
+      terms: [{ term: 'Fall 2026', courses: [acc401], credits_planned: 3 }],
+      allCourses: [acc401],
+      completedCourseCodes: ['ACC310'],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'missingPrerequisite' && v.courseCode === 'ACC 401')).toBe(false);
+  });
+
+  it('accepts prerequisite when prerequisite course is in an earlier term', () => {
+    const acc310 = mkCourse('ACC 310', 3);
+    const acc401 = mkCourse('ACC 401', 3, { prerequisite: 'ACC 310' });
+    const state = mkState({
+      terms: [
+        { term: 'Fall 2026', courses: [acc310], credits_planned: 3 },
+        { term: 'Winter 2027', courses: [acc401], credits_planned: 3 },
+      ],
+      allCourses: [acc310, acc401],
+      completedCourseCodes: [],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'missingPrerequisite' && v.courseCode === 'ACC 401')).toBe(false);
+  });
+
+  it('flags ASAP pace when terms are skipped while courses remain', () => {
+    const state = mkState({
+      preferences: {
+        maxCreditsPerTerm: 15,
+        minCreditsPerTerm: 12,
+        genEdStrategy: 'balance',
+        graduationPace: 'fast',
+        studentType: 'undergrad',
+        transcriptCredits: 0,
+      },
+      terms: [
+        { term: 'Fall 2026', courses: [mkCourse('IS 101', 3)], credits_planned: 3 },
+        { term: 'Fall 2027', courses: [mkCourse('IS 201', 3)], credits_planned: 3 },
+      ],
+      allCourses: [mkCourse('IS 101', 3), mkCourse('IS 201', 3)],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'paceRule')).toBe(true);
+    expect(result.isPlanSound).toBe(false);
+  });
+
+  it('flags sustainable pace when short terms appear too early', () => {
+    const state = mkState({
+      preferences: {
+        maxCreditsPerTerm: 15,
+        minCreditsPerTerm: 12,
+        genEdStrategy: 'balance',
+        graduationPace: 'sustainable',
+        studentType: 'undergrad',
+        transcriptCredits: 0,
+      },
+      terms: [
+        { term: 'Fall 2026', courses: [mkCourse('IS 101', 3), mkCourse('IS 102', 3), mkCourse('IS 103', 3), mkCourse('IS 104', 3)], credits_planned: 12 },
+        { term: 'Spring 2027', courses: [mkCourse('IS 201', 3)], credits_planned: 3 },
+        { term: 'Winter 2027', courses: [mkCourse('IS 202', 3), mkCourse('IS 203', 3), mkCourse('IS 204', 3), mkCourse('IS 205', 3)], credits_planned: 12 },
+        { term: 'Fall 2027', courses: [mkCourse('IS 301', 3), mkCourse('IS 302', 3), mkCourse('IS 303', 3), mkCourse('IS 304', 3)], credits_planned: 12 },
+      ],
+      allCourses: [
+        mkCourse('IS 101', 3), mkCourse('IS 102', 3), mkCourse('IS 103', 3), mkCourse('IS 104', 3),
+        mkCourse('IS 201', 3), mkCourse('IS 202', 3), mkCourse('IS 203', 3), mkCourse('IS 204', 3), mkCourse('IS 205', 3),
+        mkCourse('IS 301', 3), mkCourse('IS 302', 3), mkCourse('IS 303', 3), mkCourse('IS 304', 3),
+      ],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'paceRule' && v.termName === 'Spring 2027')).toBe(true);
+  });
+
+  it('flags undecided pace when short terms are used before major is chosen', () => {
+    const state = mkState({
+      preferences: {
+        maxCreditsPerTerm: 15,
+        minCreditsPerTerm: 12,
+        genEdStrategy: 'balance',
+        graduationPace: 'undecided',
+        studentType: 'undergrad',
+        transcriptCredits: 0,
+      },
+      phases: ['genEd'],
+      terms: [
+        {
+          term: 'Spring 2026',
+          courses: [mkCourse('GE 101', 3, { source: 'genEd' })],
+          credits_planned: 3,
+        },
+        {
+          term: 'Fall 2026',
+          courses: [mkCourse('GE 102', 3, { source: 'genEd' }), mkCourse('GE 103', 3, { source: 'genEd' }), mkCourse('GE 104', 3, { source: 'genEd' }), mkCourse('GE 105', 3, { source: 'genEd' })],
+          credits_planned: 12,
+        },
+      ],
+      allCourses: [
+        mkCourse('GE 101', 3, { source: 'genEd' }),
+        mkCourse('GE 102', 3, { source: 'genEd' }),
+        mkCourse('GE 103', 3, { source: 'genEd' }),
+        mkCourse('GE 104', 3, { source: 'genEd' }),
+        mkCourse('GE 105', 3, { source: 'genEd' }),
+      ],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'paceRule' && v.termName === 'Spring 2026')).toBe(true);
+  });
 });
 
 describe('playground mutation tools', () => {
@@ -180,7 +324,7 @@ describe('playground mutation tools', () => {
   it('returns needsHeuristicsRecheck on successful mutations', async () => {
     const state = mkState({
       terms: [{ term: 'Fall 2026', courses: [mkCourse('IS 101', 3)], credits_planned: 3 }],
-      allCourses: [mkCourse('IS 101', 3)],
+      allCourses: [mkCourse('IS 101', 3), mkCourse('IS 201', 3)],
     });
     const planId = seedStore(state);
     const tools = getAgentTools(planId);
@@ -195,6 +339,22 @@ describe('playground mutation tools', () => {
     expect(createResult.needsHeuristicsRecheck).toBe(true);
     expect(removeResult.needsHeuristicsRecheck).toBe(true);
     expect(deleteResult.needsHeuristicsRecheck).toBe(true);
+  });
+
+  it('does not create a new term when no unplanned courses remain', async () => {
+    const state = mkState({
+      terms: [{ term: 'Fall 2026', courses: [mkCourse('IS 101', 3)], credits_planned: 3 }],
+      allCourses: [mkCourse('IS 101', 3)],
+    });
+    const planId = seedStore(state);
+    const tools = getAgentTools(planId);
+    if (!tools.createTerm.execute) throw new Error('createTerm must have execute');
+
+    const result = await tools.createTerm.execute({ termName: 'Winter 2027' });
+
+    expect(result.message).toContain('No term created');
+    expect(result.totalUnplanned).toBe(0);
+    expect(store.get(planId)?.terms.length).toBe(1);
   });
 
   it('inserts milestones between existing terms', async () => {

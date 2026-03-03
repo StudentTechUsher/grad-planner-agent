@@ -4,6 +4,8 @@ import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
+import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
+import { captureServerError, captureServerEvent } from '@/lib/posthogServer';
 
 let heuristicsContext: string | null = null;
 let examplesContext: string | null = null;// ─── In-memory scaffold state ──────────────────────────────────────────
@@ -31,6 +33,13 @@ const planSchema = z.object({
 
 // ─── POST handler – add courses from a phase ────────────────────────────
 export async function POST(req: NextRequest) {
+    const session = await getAgentSessionFromRequest(req);
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const jsonWithSession = (body: unknown, init?: ResponseInit) =>
+        withRefreshedAgentSession(NextResponse.json(body, init), session);
+
     if (heuristicsContext === null || examplesContext === null) {
         try {
             const rawHeuristics = await fs.readFile(path.join(process.cwd(), 'grad-planner-heuristics.md'), 'utf-8');
@@ -52,14 +61,24 @@ export async function POST(req: NextRequest) {
     };
 
     if (!planId || !phase || !Array.isArray(courses)) {
-        return NextResponse.json({ error: 'Missing required fields: planId, phase, courses' }, { status: 400 });
+        return jsonWithSession({ error: 'Missing required fields: planId, phase, courses' }, { status: 400 });
     }
 
     let state = store.get(planId);
+    if (state?.userId && state.userId !== session.userId) {
+        return jsonWithSession({ error: 'Forbidden: plan ownership mismatch.' }, { status: 403 });
+    }
+    if (state && !state.userId) {
+        state.userId = session.userId;
+    }
+    if (state && !Array.isArray(state.selectedProgramIds)) {
+        state.selectedProgramIds = [];
+    }
 
     if (!state) {
         state = {
             planId,
+            userId: session.userId,
             createdAt: Date.now(),
             hasPreferencesSet: true,
             preferences: {
@@ -79,6 +98,7 @@ export async function POST(req: NextRequest) {
             terms: [],
             milestones: [],
             allCourses: [],
+            selectedProgramIds: [],
         };
     }
 
@@ -103,13 +123,13 @@ CRITICAL RULES:
 3. EXTREMELY STRICT: The student's preferences dictate a maximum of ${state.preferences.maxCreditsPerTerm} credits per term. You MUST NOT exceed this limit under ANY circumstances!
 3.5. General Education Strategy: ${state.preferences.genEdStrategy === 'prioritize' ? 'Push all Gen Ed courses to the earliest possible terms.' : 'Distribute Gen Ed courses evenly across the entire graduation plan.'}
 3.6. Graduation Pace & Credit Targeting:
-- If graduation pace is 'fast' (ASAP): Target EXACTLY the maximum allowed credits (${state.preferences.maxCreditsPerTerm} for Fall/Winter, ${Math.ceil(state.preferences.maxCreditsPerTerm / 2)} for Spring/Summer) in every term to graduate early. If you need more credits to hit the max, invent and add "Gen Ed Placeholder" courses (3 credits each)!
-- If graduation pace is 'sustainable': Target an average of ${Math.floor((state.preferences.minCreditsPerTerm + state.preferences.maxCreditsPerTerm) / 2)} credits per term.
-- If graduation pace is 'undecided': Heavily prioritize Gen Ed placeholders in the first year to allow the student time to decide on a program.
+- If graduation pace is 'fast' (ASAP): Use EVERY available term in sequence (Fall, Winter, Spring, Summer) until graduation. Do not skip Spring/Summer when courses remain.
+- If graduation pace is 'sustainable': Prioritize Fall/Winter as primary terms. Only use Spring/Summer at the END of the plan when it helps avoid waiting until the next school year.
+- If graduation pace is 'undecided': Do not schedule Spring/Summer (8-week) terms until a major is decided.
 3.6.5 Gen Ed Placeholders: You MUST actively invent and insert "Gen Ed Placeholder" courses (3 credits, code "GE 000", source 'genEd') depending on the gen-ed strategy:
 - 'prioritize': Put 2-3 Gen Ed placeholders in the earliest terms.
-- 'balance': Put about 1 Gen Ed placeholder in every term.
-- (If pace is 'undecided', put 3-4 Gen Ed placeholders in the early terms).
+- 'balance': Put about 1 Gen Ed placeholder in each primary term.
+- If pace is 'undecided', keep placeholders in Fall/Winter first.
 ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The student wants to graduate around ${state.preferences.anticipatedGraduation}. Try to hit this target if credit constraints allow.` : ''}
 4. The sequence of terms at BYU is Fall, Winter, Spring, Summer. Standard Fall/Winter term load is 12-16 credits. Spring/Summer is half-term (max 6-8 credits).
 5. If an existing term has room below the max credits, you can add new courses to it.
@@ -138,15 +158,35 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
                         const { terms } = plan;
                         const checkErrors: string[] = [];
 
-                        // Parse term string (e.g. "Fall 2026") to easily generate next terms
+                        // Parse term string (e.g. "Fall 2026") and advance based on graduation pace.
                         const getNextTerm = (currentTerm: string) => {
                             const parts = currentTerm.trim().split(' ');
                             let sem = parts[0];
                             let year = parseInt(parts[1]) || new Date().getFullYear();
-                            if (sem.toLowerCase() === 'fall') sem = 'Winter';
-                            else if (sem.toLowerCase() === 'winter') sem = 'Spring';
+
+                            const pace = state!.preferences.graduationPace;
+                            if (pace === 'sustainable') {
+                                // Sustainable defaults to semester cadence (Fall/Winter).
+                                if (sem.toLowerCase() === 'fall') {
+                                    sem = 'Winter';
+                                    year += 1;
+                                } else if (sem.toLowerCase() === 'winter') {
+                                    sem = 'Fall';
+                                } else if (sem.toLowerCase() === 'spring') {
+                                    sem = 'Summer';
+                                } else {
+                                    sem = 'Fall';
+                                }
+                                return `${sem} ${year}`;
+                            }
+
+                            // Fast and undecided use full term sequence when extending.
+                            if (sem.toLowerCase() === 'fall') {
+                                sem = 'Winter';
+                                year += 1;
+                            } else if (sem.toLowerCase() === 'winter') sem = 'Spring';
                             else if (sem.toLowerCase() === 'spring') sem = 'Summer';
-                            else { sem = 'Fall'; year++; }
+                            else sem = 'Fall';
                             return `${sem} ${year}`;
                         };
 
@@ -200,7 +240,16 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
                         }
 
                         if (checkErrors.length > 0) {
-                            console.warn("Heuristics enforced for plan", planId, ":", checkErrors);
+                            void captureServerEvent('scaffold_heuristics_enforced', 'warn', {
+                                route: '/api/scaffold',
+                                request: req,
+                                distinctId: session.userId,
+                                properties: {
+                                    planId,
+                                    violationCount: checkErrors.length,
+                                    violations: checkErrors,
+                                },
+                            });
                         }
 
                         state!.terms = enforcedTerms;
@@ -221,29 +270,43 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
             },
         });
 
-        return result.toUIMessageStreamResponse();
+        return withRefreshedAgentSession(result.toUIMessageStreamResponse(), session);
     } catch (e) {
-        console.error("AI SDK Scaffold Generation Failed:", e);
-        return NextResponse.json({ error: 'Failed to generate plan scaffold with AI.' }, { status: 500 });
+        void captureServerError('scaffold_generation_failed', e, {
+            route: '/api/scaffold',
+            request: req,
+            distinctId: session.userId,
+        });
+        return jsonWithSession({ error: 'Failed to generate plan scaffold with AI.' }, { status: 500 });
     }
 }
 
 // ─── GET handler – retrieve current scaffold ─────────────────────────────
 export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
+    const session = await getAgentSessionFromRequest(req);
+    if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const jsonWithSession = (body: unknown, init?: ResponseInit) =>
+        withRefreshedAgentSession(NextResponse.json(body, init), session);
+
     const planId = req.nextUrl.searchParams.get('planId');
 
     if (!planId) {
-        return NextResponse.json({ error: 'planId is required' }, { status: 400 });
+        return jsonWithSession({ error: 'planId is required' }, { status: 400 });
     }
 
     const state = store.get(planId);
 
     if (!state) {
-        return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
+        return jsonWithSession({ error: 'Plan not found' }, { status: 404 });
+    }
+    if (state.userId && state.userId !== session.userId) {
+        return jsonWithSession({ error: 'Forbidden: plan ownership mismatch.' }, { status: 403 });
     }
 
-    return NextResponse.json({
+    return jsonWithSession({
         planId: state.planId,
         phases: state.phases,
         totalCourses: state.allCourses.length,
