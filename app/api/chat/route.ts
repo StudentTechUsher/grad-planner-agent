@@ -56,6 +56,7 @@ type UIMessageToolInvocation = {
 };
 
 type GenericObject = Record<string, unknown>;
+type ConvertToModelMessagesInput = Parameters<typeof convertToModelMessages>[0];
 type ToolCallDebugMeta = {
     toolCallId: string;
     toolName: string;
@@ -200,8 +201,10 @@ const collectToolCallDebugMeta = (messages: unknown[]): Map<string, ToolCallDebu
     return byId;
 };
 
-const sanitizeMessagesForModel = (messages: unknown[]): unknown[] =>
-    messages.map((message) => {
+const sanitizeMessagesForModel = (
+    messages: ConvertToModelMessagesInput,
+): ConvertToModelMessagesInput =>
+    (messages as unknown[]).map((message) => {
         if (!isObject(message)) return message;
         const nextMessage: GenericObject = { ...message };
 
@@ -224,7 +227,7 @@ const sanitizeMessagesForModel = (messages: unknown[]): unknown[] =>
         }
 
         return nextMessage;
-    });
+    }) as ConvertToModelMessagesInput;
 
 const getMessageText = (message: unknown): string => {
     if (!isObject(message)) return '';
@@ -377,7 +380,7 @@ export async function POST(req: Request) {
     if (!planId) {
         return jsonWithSession({ error: 'planId is required (query ?planId=..., body.planId, or body.id).' }, { status: 400 });
     }
-    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const messages = (Array.isArray(body.messages) ? body.messages : []) as ConvertToModelMessagesInput;
     const latestUserMessage = [...messages].reverse().find((msg) => isObject(msg) && msg.role === 'user');
     const latestUserText = getMessageText(latestUserMessage).toLowerCase();
     const userRequestedPreferenceUpdate =

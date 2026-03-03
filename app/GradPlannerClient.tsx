@@ -221,8 +221,9 @@ export default function Home() {
         // @ts-ignore
         if (addToolResult) {
           addToolResult({
+            tool: pendingCall.toolName || "unknown",
             toolCallId: pendingCall.toolCallId,
-            result: { action: "interrupted_by_user", userMessage: input },
+            output: { action: "interrupted_by_user", userMessage: input },
           });
         } else if (addToolOutput) {
           addToolOutput({
