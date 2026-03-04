@@ -413,6 +413,33 @@ export const getAgentTools = (planId: string) => {
     if (!Array.isArray(nextState.selectedProgramIds)) nextState.selectedProgramIds = [];
     return nextState;
   };
+  const buildPlanningSnapshot = (nextState: ScaffoldState) => {
+    const remainingCourses = getRemainingCourses(nextState).map((course) => ({
+      code: course.code,
+      title: course.title,
+      credits: course.credits,
+      source: course.source,
+    }));
+    const trailingTerm = nextState.terms[nextState.terms.length - 1];
+    return {
+      totalUnplanned: remainingCourses.length,
+      remainingCourses,
+      termCount: nextState.terms.length,
+      trailingTerm: trailingTerm
+        ? {
+          termName: trailingTerm.term,
+          courseCount: trailingTerm.courses.length,
+          creditsPlanned: trailingTerm.credits_planned,
+        }
+        : null,
+    };
+  };
+  const withPlanningSnapshot = (nextState: ScaffoldState, payload: Record<string, unknown> = {}) => ({
+    ...payload,
+    plan: nextState.terms,
+    milestones: nextState.milestones,
+    ...buildPlanningSnapshot(nextState),
+  });
   const insertMilestoneInState = (
     milestoneName: string,
     targetTerm: string,
@@ -505,7 +532,7 @@ export const getAgentTools = (planId: string) => {
       inputSchema: z.object({}),
     },
     selectMajorCourses: {
-      description: 'Present the user with a per-requirement course selection form for their chosen program. Use programType=\'major\' for undergrad majors and programType=\'graduate_no_gen_ed\' for graduate programs. You must wait for the client to submit.',
+      description: 'Present the user with a per-requirement course selection form for their chosen program. Use programType=\'major\' for undergrad majors and programType=\'graduate_no_gen_ed\' for graduate programs. You must wait for the client to submit. If the result includes action=\'change_major\', call requestMajorSelection again.',
       inputSchema: z.object({
         programName: z.string().describe('The exact program name, e.g. "Information Systems (BSIS)"'),
         programType: z.enum(['major', 'graduate_no_gen_ed']).optional().describe('Program type for requirement lookup. Use graduate_no_gen_ed for graduate students.'),
@@ -515,7 +542,7 @@ export const getAgentTools = (planId: string) => {
       }),
     },
     selectMinorCourses: {
-      description: 'Present the user with a per-requirement course selection form for their chosen minor program. You must wait for the client to submit. Skip this if the user has no minor.',
+      description: 'Present the user with a per-requirement course selection form for their chosen minor program. You must wait for the client to submit. Skip this if the user has no minor. If the result includes action=\'change_minor\', call requestMinorSelection again. If action=\'skip_minor\', continue as no-minor.',
       inputSchema: z.object({
         programName: z.string().describe('The exact minor program name'),
         selectedPrograms: z.array(z.string()).optional().describe('Optional ordered list of all selected minors for sequential processing.'),
@@ -763,11 +790,8 @@ export const getAgentTools = (planId: string) => {
         let state = rawState ? ensureCollections(rawState) : null;
         if (!state) return { error: 'Plan state not found.' };
 
-        const remaining = getRemainingCourses(state);
-
         return {
-          totalUnplanned: remaining.length,
-          remainingCourses: remaining,
+          ...buildPlanningSnapshot(state),
           preferences: state.preferences
         };
       }
@@ -784,37 +808,31 @@ export const getAgentTools = (planId: string) => {
 
         const remaining = getRemainingCourses(state);
         if (remaining.length === 0) {
-          return {
+          return withPlanningSnapshot(state, {
             message: `No term created: all selected courses are already planned. Continue to milestones/review instead of creating an empty term.`,
-            plan: state.terms,
-            milestones: state.milestones,
             needsHeuristicsRecheck: false,
-            totalUnplanned: 0,
-          };
+          });
         }
 
         const exists = state.terms.find((t: any) => t.term === termName);
-        if (exists) return { message: `Term ${termName} already exists.` };
+        if (exists) {
+          return withPlanningSnapshot(state, { message: `Term ${termName} already exists.` });
+        }
 
         const trailingTerm = state.terms[state.terms.length - 1];
         if (trailingTerm && Array.isArray(trailingTerm.courses) && trailingTerm.courses.length === 0) {
-          return {
+          return withPlanningSnapshot(state, {
             message: `No term created: the latest term "${trailingTerm.term}" is already empty. Fill or delete it before creating another term.`,
-            plan: state.terms,
-            milestones: state.milestones,
             needsHeuristicsRecheck: false,
-            totalUnplanned: remaining.length,
-          };
+          });
         }
 
         state.terms.push({ term: termName, courses: [], credits_planned: 0 });
         store.set(planId, state);
-        return {
+        return withPlanningSnapshot(state, {
           message: `Term ${termName} created successfully.`,
-          plan: state.terms,
-          milestones: state.milestones,
           needsHeuristicsRecheck: true,
-        };
+        });
       }
     },
     deleteTerm: {
@@ -829,35 +847,29 @@ export const getAgentTools = (planId: string) => {
 
         const term = state.terms.find((t: any) => t.term === termName);
         if (!term) {
-          return { message: `Term ${termName} not found.`, plan: state.terms };
+          return withPlanningSnapshot(state, { message: `Term ${termName} not found.` });
         }
 
         if (term.courses.length > 0) {
-          return {
+          return withPlanningSnapshot(state, {
             error: `Term ${termName} is not empty and cannot be deleted.`,
-            plan: state.terms,
-            milestones: state.milestones,
-          };
+          });
         }
 
         const hasMilestonesAfterTerm = state.milestones.some((milestone) => milestone.afterTerm === termName);
         if (hasMilestonesAfterTerm) {
-          return {
+          return withPlanningSnapshot(state, {
             error: `Term ${termName} has milestone(s) attached and cannot be deleted.`,
-            plan: state.terms,
-            milestones: state.milestones,
-          };
+          });
         }
 
         state.terms = state.terms.filter((t: any) => t.term !== termName);
         store.set(planId, state);
 
-        return {
+        return withPlanningSnapshot(state, {
           message: `Term ${termName} deleted.`,
-          plan: state.terms,
-          milestones: state.milestones,
           needsHeuristicsRecheck: true,
-        };
+        });
       }
     },
     addCoursesToTerm: {
@@ -892,19 +904,15 @@ export const getAgentTools = (planId: string) => {
         const { currentMax } = getTermCreditLimits(termName, state.preferences);
 
         if (term.credits_planned > currentMax) {
-          return {
+          return withPlanningSnapshot(state, {
             message: `Courses added to ${termName}, BUT WARNING: Term now has ${term.credits_planned} credits, which exceeds the max of ${currentMax} credits for this term!`,
-            plan: state.terms,
-            milestones: state.milestones,
             needsHeuristicsRecheck: true,
-          };
+          });
         }
-        return {
+        return withPlanningSnapshot(state, {
           message: `Added ${courses.length} courses to ${termName}. Term now has ${term.credits_planned} credits.`,
-          plan: state.terms,
-          milestones: state.milestones,
           needsHeuristicsRecheck: true,
-        };
+        });
       }
     },
     removeCourseFromTerm: {
@@ -919,7 +927,7 @@ export const getAgentTools = (planId: string) => {
         if (!state) return { error: 'Plan state not found.' };
 
         const term = state.terms.find((t: any) => t.term === termName);
-        if (!term) return { error: `Term ${termName} not found.`, milestones: state.milestones };
+        if (!term) return withPlanningSnapshot(state, { error: `Term ${termName} not found.` });
 
         const initialLen = term.courses.length;
         term.courses = term.courses.filter((c: any) => c.code !== courseCode);
@@ -927,15 +935,13 @@ export const getAgentTools = (planId: string) => {
         store.set(planId, state);
 
         if (term.courses.length < initialLen) {
-          return {
+          return withPlanningSnapshot(state, {
             message: `Course ${courseCode} removed from ${termName}.`,
-            plan: state.terms,
-            milestones: state.milestones,
             needsHeuristicsRecheck: true,
-          };
+          });
         }
 
-        return { message: `Course ${courseCode} not found in ${termName}.`, plan: state.terms, milestones: state.milestones };
+        return withPlanningSnapshot(state, { message: `Course ${courseCode} not found in ${termName}.` });
       }
     },
     checkPlanHeuristics: {
@@ -945,7 +951,16 @@ export const getAgentTools = (planId: string) => {
         const rawState = store.get(planId);
         let state = rawState ? ensureCollections(rawState) : null;
         if (!state) return { error: 'Plan state not found.' };
-        return evaluatePlanHeuristics(state);
+        const heuristics = evaluatePlanHeuristics(state);
+        return {
+          ...heuristics,
+          remainingCourses: getRemainingCourses(state).map((course) => ({
+            code: course.code,
+            title: course.title,
+            credits: course.credits,
+            source: course.source,
+          })),
+        };
       }
     },
     insertMilestone: {

@@ -40,24 +40,6 @@ function normalizeStudentType(raw: unknown): StudentType {
   return "undergrad";
 }
 
-function normalizeSearchText(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function matchesProgramQuery(programName: string, query: string): boolean {
-  const normalizedQuery = normalizeSearchText(query);
-  if (!normalizedQuery) return true;
-  const normalizedProgramName = normalizeSearchText(programName);
-  if (normalizedProgramName.includes(normalizedQuery)) return true;
-
-  const compactQuery = normalizedQuery.replace(/\s+/g, "");
-  const compactProgramName = normalizedProgramName.replace(/\s+/g, "");
-  if (compactQuery && compactProgramName.includes(compactQuery)) return true;
-
-  const queryTokens = normalizedQuery.split(" ").filter(Boolean);
-  return queryTokens.length > 0 && queryTokens.every((token) => normalizedProgramName.includes(token));
-}
-
 function extractToolInvocations(msg: any): any[] {
   if (Array.isArray(msg?.toolInvocations) && msg.toolInvocations.length > 0) return msg.toolInvocations;
   if (!Array.isArray(msg?.parts)) return [];
@@ -70,51 +52,6 @@ function extractToolInvocations(msg: any): any[] {
     }));
 }
 
-function collectPendingToolCalls(messages: any[]): Array<{ toolCallId: string; toolName: string }> {
-  const pending = new Map<string, string>();
-
-  for (const msg of messages) {
-    if (Array.isArray(msg?.toolInvocations)) {
-      for (const tool of msg.toolInvocations) {
-        const toolCallId = typeof tool?.toolCallId === "string" ? tool.toolCallId : "";
-        if (!toolCallId) continue;
-        const hasResult =
-          tool?.state === "result" ||
-          tool?.state === "output-available" ||
-          ("result" in (tool || {})) ||
-          ("output" in (tool || {}));
-        if (hasResult) continue;
-        const toolName = typeof tool?.toolName === "string" && tool.toolName.length > 0 ? tool.toolName : "unknown";
-        pending.set(toolCallId, toolName);
-      }
-    }
-
-    if (Array.isArray(msg?.parts)) {
-      for (const part of msg.parts) {
-        const toolCallId = typeof part?.toolCallId === "string" ? part.toolCallId : "";
-        if (!toolCallId) continue;
-        const isToolPart = part?.type === "tool-call" || (typeof part?.type === "string" && part.type.startsWith("tool-"));
-        if (!isToolPart) continue;
-        const hasResult =
-          part?.state === "result" ||
-          part?.state === "output-available" ||
-          "result" in (part || {}) ||
-          "output" in (part || {});
-        if (hasResult) continue;
-        const toolName =
-          typeof part?.toolName === "string" && part.toolName.length > 0
-            ? part.toolName
-            : typeof part?.type === "string"
-              ? part.type.replace("tool-", "")
-              : "unknown";
-        pending.set(toolCallId, toolName);
-      }
-    }
-  }
-
-  return [...pending.entries()].map(([toolCallId, toolName]) => ({ toolCallId, toolName }));
-}
-
 function getLatestPreferencesFromMessages(messages: any[]): any | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     const tools = extractToolInvocations(messages[i]);
@@ -125,23 +62,6 @@ function getLatestPreferencesFromMessages(messages: any[]): any | undefined {
     }
   }
   return undefined;
-}
-
-function reportClientError(event: string, error: unknown, context?: Record<string, unknown>): void {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === "string"
-        ? error
-        : "Unknown client error";
-
-  fetch("/api/telemetry/client-error", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ event, message, context }),
-  }).catch(() => {
-    // Swallow telemetry errors to avoid impacting user flow.
-  });
 }
 
 function suggestPlanName(planData: any): string {
@@ -214,26 +134,54 @@ export default function Home() {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
-    // If the user types while any form tool call is unresolved, resolve it so the SDK can continue.
-    const pendingCalls = collectPendingToolCalls(messages as any[]);
-    for (const pendingCall of pendingCalls) {
-      try {
-        // @ts-ignore
-        if (addToolResult) {
-          addToolResult({
-            tool: pendingCall.toolName || "unknown",
-            toolCallId: pendingCall.toolCallId,
-            output: { action: "interrupted_by_user", userMessage: input },
-          });
-        } else if (addToolOutput) {
-          addToolOutput({
-            tool: pendingCall.toolName || "unknown",
-            toolCallId: pendingCall.toolCallId,
-            output: { action: "interrupted_by_user", userMessage: input },
-          });
+    // If the user types a manual message while tool forms are pending,
+    // resolve any unresolved tool call so the request stream can continue safely.
+    if (messages.length > 0) {
+      const pendingToolCalls = new Map<string, string>();
+
+      for (const msg of messages as any[]) {
+        if (Array.isArray(msg?.toolInvocations)) {
+          for (const tool of msg.toolInvocations) {
+            const toolCallId = typeof tool?.toolCallId === "string" ? tool.toolCallId : "";
+            if (!toolCallId) continue;
+            const hasResult =
+              tool?.state === "result" ||
+              tool?.state === "output-available" ||
+              tool?.result !== undefined ||
+              tool?.output !== undefined;
+            if (hasResult) continue;
+            const toolName = typeof tool?.toolName === "string" && tool.toolName.length > 0 ? tool.toolName : "unknown";
+            pendingToolCalls.set(toolCallId, toolName);
+          }
         }
-      } catch {
-        // Non-blocking; request can still proceed.
+
+        if (Array.isArray(msg?.parts)) {
+          for (const part of msg.parts) {
+            const type = typeof part?.type === "string" ? part.type : "";
+            if (!type.startsWith("tool-") && type !== "tool-call") continue;
+            const toolCallId = typeof part?.toolCallId === "string" ? part.toolCallId : "";
+            if (!toolCallId) continue;
+            const hasResult =
+              part?.state === "result" ||
+              part?.state === "output-available" ||
+              part?.result !== undefined ||
+              part?.output !== undefined;
+            if (hasResult) continue;
+            const toolName =
+              typeof part?.toolName === "string" && part.toolName.length > 0
+                ? part.toolName
+                : type.replace("tool-", "") || "unknown";
+            pendingToolCalls.set(toolCallId, toolName);
+          }
+        }
+      }
+
+      for (const [toolCallId, toolName] of pendingToolCalls.entries()) {
+        try {
+          // @ts-ignore
+          if (addToolResult) addToolResult({ toolCallId, result: { action: "interrupted_by_user", userMessage: input } });
+          else if (addToolOutput) addToolOutput({ tool: toolName, toolCallId, output: { action: "interrupted_by_user", userMessage: input } });
+        } catch (_err) { }
       }
     }
 
@@ -248,18 +196,8 @@ export default function Home() {
   const [liveJson, setLiveJson] = useState<any>(null);
   const [transcriptCourses, setTranscriptCourses] = useState<any[]>([]);
   const [isPlanSound, setIsPlanSound] = useState(false);
-  const [agentNotice, setAgentNotice] = useState<string | null>(null);
   const [showDevToolLog, setShowDevToolLog] = useState(false);
   const isDevBuild = process.env.NODE_ENV !== "production";
-  const agentNoticeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const showAgentNotice = (message: string) => {
-    setAgentNotice(message);
-    if (agentNoticeTimeoutRef.current) {
-      clearTimeout(agentNoticeTimeoutRef.current);
-    }
-    agentNoticeTimeoutRef.current = setTimeout(() => setAgentNotice(null), 8000);
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -315,20 +253,10 @@ export default function Home() {
     () => getLatestPreferencesFromMessages(messages as any[]) ?? bootstrap?.preferences,
     [messages, bootstrap?.preferences]
   );
-
-  useEffect(() => {
-    return () => {
-      if (agentNoticeTimeoutRef.current) {
-        clearTimeout(agentNoticeTimeoutRef.current);
-      }
-    };
-  }, []);
-
   const workflowProgress = useMemo(() => {
     const toolInvocations = (messages as any[]).flatMap((message) => extractToolInvocations(message));
     const resultInvocations = toolInvocations.filter((tool) => tool?.state === "result");
     const hasResult = (toolName: string) => resultInvocations.some((tool) => tool.toolName === toolName);
-    const countResults = (toolName: string) => resultInvocations.filter((tool) => tool.toolName === toolName).length;
     const hasToolAnyState = (toolName: string) => toolInvocations.some((tool) => tool.toolName === toolName);
     const latestResult = (toolName: string) => {
       for (let i = resultInvocations.length - 1; i >= 0; i--) {
@@ -339,25 +267,30 @@ export default function Home() {
     };
 
     const studentType = normalizeStudentType(preferences?.studentType);
-    const latestMajorSelection: any = latestResult("requestMajorSelection");
     const latestMinorSelection: any = latestResult("requestMinorSelection");
-    const selectedMajors = Array.isArray(latestMajorSelection?.selectedPrograms)
-      ? latestMajorSelection.selectedPrograms.filter((name: unknown) => typeof name === "string" && name.trim().length > 0)
-      : typeof latestMajorSelection?.selectedProgram === "string" && latestMajorSelection.selectedProgram.trim().length > 0
-        ? [latestMajorSelection.selectedProgram.trim()]
-        : [];
-    const selectedMinors = Array.isArray(latestMinorSelection?.selectedPrograms)
-      ? latestMinorSelection.selectedPrograms.filter((name: unknown) => typeof name === "string" && name.trim().length > 0)
-      : typeof latestMinorSelection?.selectedProgram === "string" && latestMinorSelection.selectedProgram.trim().length > 0
-        ? [latestMinorSelection.selectedProgram.trim()]
-        : [];
-    const majorSelectionCount = Math.max(selectedMajors.length, 1);
-    const minorSelectionCount = selectedMinors.length;
+    const latestMajorCoursesResult: any = latestResult("selectMajorCourses");
+    const latestMajorCourseAction =
+      latestMajorCoursesResult &&
+      typeof latestMajorCoursesResult === "object" &&
+      typeof latestMajorCoursesResult.action === "string"
+        ? latestMajorCoursesResult.action
+        : null;
+    const majorSelectionReset = latestMajorCourseAction === "change_major";
+    const latestMinorCoursesResult: any = latestResult("selectMinorCourses");
+    const latestMinorCourseAction =
+      latestMinorCoursesResult &&
+      typeof latestMinorCoursesResult === "object" &&
+      typeof latestMinorCoursesResult.action === "string"
+        ? latestMinorCoursesResult.action
+        : null;
+    const minorExplicitlySkipped =
+      latestMinorCourseAction === "skip_minor" || latestMinorCourseAction === "change_minor";
     const minorSelected =
       !!latestMinorSelection &&
       typeof latestMinorSelection === "object" &&
-      minorSelectionCount > 0 &&
-      latestMinorSelection.skipped !== true;
+      !!latestMinorSelection.selectedProgram &&
+      latestMinorSelection.skipped !== true &&
+      !minorExplicitlySkipped;
 
     const latestHeuristics: any = latestResult("checkPlanHeuristics");
     let heuristicsClean = false;
@@ -403,7 +336,7 @@ export default function Home() {
       },
       {
         id: studentType === "graduate" ? "graduate-courses" : "major-courses",
-        done: countResults("selectMajorCourses") >= majorSelectionCount,
+        done: hasResult("selectMajorCourses") && !majorSelectionReset,
       },
     ];
 
@@ -415,7 +348,7 @@ export default function Home() {
       if (minorSelected) {
         steps.push({
           id: "minor-courses",
-          done: countResults("selectMinorCourses") >= minorSelectionCount,
+          done: hasResult("selectMinorCourses"),
         });
       }
       if (studentType === "honors") {
@@ -563,6 +496,35 @@ export default function Home() {
     [messages, scaffoldChat.messages]
   );
 
+  const remainingCoursesStatus = useMemo(() => {
+    const combinedMessages = [...messages, ...scaffoldChat.messages];
+    for (let i = combinedMessages.length - 1; i >= 0; i--) {
+      const toolInvocations = extractToolInvocations(combinedMessages[i] as any);
+      for (let j = toolInvocations.length - 1; j >= 0; j--) {
+        const tool = toolInvocations[j];
+        if (tool?.state !== "result") continue;
+        const result = tool?.result as any;
+        if (!result || typeof result !== "object" || !Array.isArray(result.remainingCourses)) continue;
+
+        const normalizedCourses = result.remainingCourses
+          .filter((course: any) => course && typeof course.code === "string")
+          .map((course: any) => ({
+            code: course.code,
+            title: typeof course.title === "string" ? course.title : course.code,
+            credits: typeof course.credits === "number" ? course.credits : null,
+            source: typeof course.source === "string" ? course.source : "",
+          }));
+
+        return {
+          totalUnplanned: typeof result.totalUnplanned === "number" ? result.totalUnplanned : normalizedCourses.length,
+          remainingCourses: normalizedCourses,
+          sourceTool: tool.toolName,
+        };
+      }
+    }
+    return null;
+  }, [messages, scaffoldChat.messages]);
+
   if (sessionStatus === "authenticating") {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -640,6 +602,42 @@ export default function Home() {
         {/* Chat Area */}
         <main className="flex-1 overflow-y-auto px-4 py-8 sm:px-6 md:px-8">
           <div className="mx-auto max-w-3xl space-y-8">
+            {remainingCoursesStatus && (
+              <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Courses Remaining To Place</p>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${remainingCoursesStatus.totalUnplanned > 0
+                    ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300"
+                    : "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                    }`}>
+                    {remainingCoursesStatus.totalUnplanned}
+                  </span>
+                </div>
+
+                {remainingCoursesStatus.remainingCourses.length > 0 ? (
+                  <div className="mt-3 max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    {remainingCoursesStatus.remainingCourses.slice(0, 12).map((course: any) => (
+                      <div key={`remaining-${course.code}`} className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 px-2.5 py-2">
+                        <span className="font-mono text-[11px] text-zinc-500 shrink-0">{course.code}</span>
+                        <span className="text-xs text-zinc-800 dark:text-zinc-200 truncate">{course.title}</span>
+                        {course.credits != null && (
+                          <span className="ml-auto text-[11px] text-zinc-500 shrink-0">{course.credits} cr</span>
+                        )}
+                      </div>
+                    ))}
+                    {remainingCoursesStatus.remainingCourses.length > 12 && (
+                      <p className="text-[11px] text-zinc-500 px-1">
+                        +{remainingCoursesStatus.remainingCourses.length - 12} more course(s)
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-2">
+                    All selected courses are currently placed in terms.
+                  </p>
+                )}
+              </div>
+            )}
             {messages.length === 0 ? (
               <div className="flex h-[50vh] flex-col items-center justify-center text-center space-y-5 text-zinc-400">
                 <Bot size={56} className="opacity-20" />
@@ -663,21 +661,28 @@ export default function Home() {
                 // Parse [System: ...] messages into a friendly label
                 const systemLabel = (() => {
                   if (!isSystemMsg) return null;
-                  if (rawContent.includes('selectMajorCourses') || rawContent.includes('Major confirmed') || rawContent.includes('Major selections confirmed')) {
-                    const confirmMatch = rawContent.match(/Major confirmed as '([^']+)'/);
-                    const callMatch = rawContent.match(/programName=['"]([^'"]+)['"]/);
-                    const name = confirmMatch?.[1] || callMatch?.[1];
-                    return name ? `✓ Major selected: ${name}` : '✓ Major confirmed';
+                  if (rawContent.includes('selectMajorCourses') || rawContent.includes('Major confirmed')) {
+                    const match = rawContent.match(/Major confirmed as '([^']+)'/);
+                    return match ? `✓ Major selected: ${match[1]}` : '✓ Major confirmed';
+                  }
+                  if (rawContent.includes('change their major selection') || rawContent.includes('change their graduate program selection')) {
+                    return '↺ Program change requested';
                   }
                   if (rawContent.includes('Minor confirmed')) {
                     const match = rawContent.match(/Minor confirmed/);
                     return '✓ Minor confirmed';
                   }
                   if (rawContent.includes('selectMinorCourses')) {
-                    const match = rawContent.match(/programName=['"]([^'"]+)['"]/);
+                    const match = rawContent.match(/programName='([^']+)'/);
                     return match ? `✓ Minor selected: ${match[1]}` : '✓ Minor confirmed';
                   }
-                  if (rawContent.includes('not to add a minor') || rawContent.includes('not to add minors') || rawContent.includes('selectGenEdCourses') && rawContent.includes('minor')) {
+                  if (rawContent.includes('change their minor selection')) {
+                    return '↺ Minor change requested';
+                  }
+                  if (rawContent.includes('not to add a minor') || rawContent.includes('selectGenEdCourses') && rawContent.includes('minor')) {
+                    return '✓ No minor selected';
+                  }
+                  if (rawContent.includes('continue without a minor')) {
                     return '✓ No minor selected';
                   }
                   if (rawContent.includes('Major course selections submitted')) {
@@ -751,7 +756,6 @@ export default function Home() {
                               scaffoldChat={scaffoldChat}
                               messages={messages}
                               preferences={preferences}
-                              onAgentNotice={showAgentNotice}
                             />
                           );
                         }
@@ -761,17 +765,6 @@ export default function Home() {
                   </div>
                 );
               })
-            )}
-
-            {agentNotice && (
-              <div className="flex gap-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-white dark:bg-white dark:text-black">
-                  <Bot size={16} />
-                </div>
-                <div className="max-w-[90%] rounded-2xl px-5 py-3 text-sm leading-relaxed bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-                  <span className="whitespace-pre-wrap">{agentNotice}</span>
-                </div>
-              </div>
             )}
 
             {isLoading && (
@@ -804,6 +797,17 @@ export default function Home() {
       <div className="hidden lg:flex lg:w-3/5 flex-col bg-zinc-50 dark:bg-zinc-950 border-l border-zinc-200 dark:border-zinc-800 relative">
         <header className="flex h-16 shrink-0 items-center justify-between px-6 bg-white dark:bg-black z-10 border-b border-zinc-200 dark:border-zinc-800 gap-4">
           <div className="flex items-center gap-4">
+            {isPlanSound && (
+              <button
+                onClick={() => {
+                  alert("Graduation Plan Accepted! You're on track to graduate.");
+                }}
+                className="px-4 py-2 bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black text-xs font-bold rounded-lg shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 animate-in zoom-in-95 duration-300"
+              >
+                <CheckCircle2 size={14} />
+                Accept Grad Plan
+              </button>
+            )}
             <div className="flex items-center gap-4">
               <h2 className="text-sm font-semibold tracking-wide uppercase text-zinc-500">Agentic Playground</h2>
               {isPlanSound && (
@@ -871,7 +875,6 @@ export default function Home() {
                       scaffoldChat={scaffoldChat}
                       messages={messages}
                       preferences={preferences}
-                      onAgentNotice={showAgentNotice}
                     />
                   ))}
                   {messages.length === 0 && scaffoldChat.messages.length === 0 && (
@@ -889,7 +892,7 @@ export default function Home() {
   );
 }
 
-function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = false, liveJson, transcriptCourses, onTranscriptParsed, onScaffoldUpdated, scaffoldChat, messages, preferences, onAgentNotice }: { tool: any, addToolOutput: (args: any) => void, sendMessage: any, planId: string, isLog?: boolean, liveJson?: any, transcriptCourses?: any[], onTranscriptParsed?: (courses: any[]) => void, onScaffoldUpdated?: (scaffold: any) => void, scaffoldChat?: any, messages?: any[], preferences?: any, onAgentNotice?: (message: string) => void }) {
+function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = false, liveJson, transcriptCourses, onTranscriptParsed, onScaffoldUpdated, scaffoldChat, messages, preferences }: { tool: any, addToolOutput: (args: any) => void, sendMessage: any, planId: string, isLog?: boolean, liveJson?: any, transcriptCourses?: any[], onTranscriptParsed?: (courses: any[]) => void, onScaffoldUpdated?: (scaffold: any) => void, scaffoldChat?: any, messages?: any[], preferences?: any }) {
   const [expanded, setExpanded] = useState(false);
   const isComplete = tool.state === "result";
   const studentType = normalizeStudentType(preferences?.studentType);
@@ -941,7 +944,7 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = 
       return <HonorsSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
     }
     if (!isComplete && tool.toolName === "requestGenEdSelection") {
-      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} messages={messages || []} onAgentNotice={onAgentNotice} />;
+      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} messages={messages || []} />;
     }
     if (!isComplete && tool.toolName === "selectMajorCourses") {
       return <ProgramCourseSelectionForm
@@ -961,7 +964,7 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = 
       return <ProgramCourseSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} type="minor" studentType={studentType} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} messages={messages || []} />;
     }
     if (!isComplete && tool.toolName === "selectGenEdCourses") {
-      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} messages={messages || []} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} onAgentNotice={onAgentNotice} />;
+      return <GenEdSelectionForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} planId={planId} messages={messages || []} transcriptCourses={transcriptCourses ?? []} onScaffoldUpdated={onScaffoldUpdated} scaffoldChat={scaffoldChat} />;
     }
     if (!isComplete && tool.toolName === "getStudentTranscript") {
       return <TranscriptUploadForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
@@ -970,7 +973,7 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = 
       return <PlanReviewForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} planId={planId} />;
     }
     if (!isComplete && tool.toolName === "addMilestones") {
-      return <MilestonesForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} studentType={studentType} />;
+      return <MilestonesForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} />;
     }
 
     // queryPrograms result: automatically show options form when recommendedPrograms are available
@@ -1698,7 +1701,7 @@ function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson, planId }: 
               disabled={isSaving || !planName.trim()}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed dark:bg-white dark:text-black shadow-sm"
             >
-              {isSaving ? "Saving..." : "Save & Return to Stuplanning"}
+              {isSaving ? "Saving..." : "Save & View Planning Dashboard"}
             </button>
             <button
               onClick={() => setIsIterating(true)}
@@ -1745,10 +1748,8 @@ function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson, planId }: 
   );
 }
 
-function MilestonesForm({ tool, addToolOutput, sendMessage, liveJson, studentType }: { tool: any, addToolOutput: any, sendMessage: any, liveJson: any, studentType: StudentType }) {
-  const programApplicationMilestone =
-    studentType === "graduate" ? "Apply for Graduate Program" : "Apply to Undergraduate Program";
-  const optionalMilestones = ["Study Abroad", "Internship", "Research", programApplicationMilestone];
+function MilestonesForm({ tool, addToolOutput, sendMessage, liveJson }: { tool: any, addToolOutput: any, sendMessage: any, liveJson: any }) {
+  const optionalMilestones = ["Study Abroad", "Internship", "Research", "Apply for Graduate Program"];
   const termOptions: string[] = Array.isArray(liveJson?.plan)
     ? liveJson.plan.map((term: any) => term.term).filter((term: any) => typeof term === "string" && term.length > 0)
     : [];
@@ -1864,11 +1865,10 @@ function MilestonesForm({ tool, addToolOutput, sendMessage, liveJson, studentTyp
 // Mirrors MajorSelectionForm but for minors. Offers autocomplete search
 // from the DB plus a "Skip / No Minor" escape hatch.
 function MinorSelectionForm({ tool, addToolOutput, sendMessage, studentType }: { tool: any, addToolOutput: any, sendMessage: any, studentType: StudentType }) {
-  const [programs, setPrograms] = useState<{ id?: string | number; name: string }[]>([]);
-  const [selectionCount, setSelectionCount] = useState<number>(0);
-  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
-  const [searchQueries, setSearchQueries] = useState<string[]>([]);
-  const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
+  const [programs, setPrograms] = useState<{ name: string }[]>([]);
+  const [filtered, setFiltered] = useState<{ name: string }[]>([]);
+  const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
 
@@ -1879,224 +1879,106 @@ function MinorSelectionForm({ tool, addToolOutput, sendMessage, studentType }: {
       const res = await fetch("/api/programs?type=minor");
       const data = await res.json();
       setPrograms(data.programs ?? []);
+      setFiltered(data.programs ?? []);
     } finally {
       setLoading(false);
       setFetched(true);
     }
   };
 
-  const updateSelectionCount = (nextCount: number) => {
-    setSelectionCount(nextCount);
-    setSelectedPrograms((prev) => {
-      const next = prev.slice(0, nextCount);
-      while (next.length < nextCount) next.push("");
-      return next;
-    });
-    setSearchQueries((prev) => {
-      const next = prev.slice(0, nextCount);
-      while (next.length < nextCount) next.push("");
-      return next;
-    });
-  };
-
-  const handleProgramChange = (index: number, value: string) => {
-    setSelectedPrograms((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-  };
-
-  const handleSearchQueryChange = (index: number, value: string) => {
-    setSearchQueries((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-    setSelectedPrograms((prev) => {
-      const next = [...prev];
-      const selectedByOtherSlots = new Set(prev.filter((name, selectedIndex) => selectedIndex !== index && name));
-      const exactMatch = programs.find(
-        (program) => !selectedByOtherSlots.has(program.name) && program.name.toLowerCase() === value.trim().toLowerCase(),
-      );
-      next[index] = exactMatch?.name ?? "";
-      return next;
-    });
-  };
-
-  const handleProgramSelect = (index: number, value: string) => {
-    handleProgramChange(index, value);
-    setSearchQueries((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-    setOpenDropdownIndex(null);
-  };
-
-  const sendNextStepAfterNoMinor = () => {
-    sendMessage({
-      text: studentType === "honors"
-        ? "[System: User chose not to add minors. This student is honors-track, so now immediately call requestHonorsSelection - do not ask the user, just invoke the tool.]"
-        : "[System: User chose not to add minors. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]"
-    });
+  const handleSearch = (val: string) => {
+    setQuery(val);
+    setSelected("");
+    setFiltered(programs.filter(p => p.name.toLowerCase().includes(val.toLowerCase())));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (selectionCount === 0) {
-      addToolOutput({
-        tool: tool.toolName,
-        toolCallId: tool.toolCallId,
-        output: { selectedProgram: null, selectedPrograms: [], selectedProgramIds: [], skipped: true, selectionCount: 0 },
-      });
-      sendNextStepAfterNoMinor();
-      return;
-    }
-
-    const trimmedSelections = selectedPrograms.map((value) => value.trim()).filter(Boolean);
-    if (trimmedSelections.length !== selectionCount) return;
-
-    const selectedProgramIds = trimmedSelections
-      .map((name) => {
-        const program = programs.find((candidate) => candidate.name === name);
-        return program?.id != null ? String(program.id) : null;
-      })
-      .filter((value): value is string => Boolean(value));
-
-    const firstProgram = trimmedSelections[0];
-    const firstProgramId = selectedProgramIds[0];
-    addToolOutput({
-      tool: tool.toolName,
-      toolCallId: tool.toolCallId,
-      output: {
-        selectedProgram: firstProgram,
-        selectedProgramId: firstProgramId,
-        selectedPrograms: trimmedSelections,
-        selectedProgramIds,
-        selectionCount: trimmedSelections.length,
-        skipped: false,
-      },
-    });
-
-    const selectedProgramsJson = JSON.stringify(trimmedSelections);
-    const selectedProgramIdsJson = JSON.stringify(selectedProgramIds);
-    sendMessage({
-      text: `[System: Minor selections confirmed. Now immediately call selectMinorCourses with programName="${firstProgram}", currentIndex=0, selectedPrograms=${selectedProgramsJson}, selectedProgramIds=${selectedProgramIdsJson}. Process one minor at a time in order. After each submission, if another minor remains, call selectMinorCourses for the next index.]`,
-    });
+    if (!selected) return;
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { selectedProgram: selected } });
+    sendMessage({ text: "[System: Minor confirmed. Now immediately call selectMinorCourses with programName='" + selected + "' \u2014 do not ask the user, just invoke the tool.]" });
   };
 
-  const isSelectionComplete =
-    selectionCount === 0 || selectedPrograms.map((value) => value.trim()).filter(Boolean).length === selectionCount;
+  const handleSkip = () => {
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { selectedProgram: null, skipped: true } });
+    sendMessage({
+      text: studentType === "honors"
+        ? "[System: User chose not to add a minor. This student is honors-track, so now immediately call requestHonorsSelection — do not ask the user, just invoke the tool.]"
+        : "[System: User chose not to add a minor. Now immediately call selectGenEdCourses \u2014 do not ask the user, just invoke the tool.]"
+    });
+  };
 
   return (
     <div className="mt-4 w-[380px] overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 shadow-md">
       <div className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-5 py-4">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Select Minors</h3>
-        <p className="text-xs text-zinc-500 mt-1">Choose up to 3 minors. We will collect courses one program at a time.</p>
+        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">Select a Minor</h3>
+        <p className="text-xs text-zinc-500 mt-1">Search for a minor below, or skip if you don't want one.</p>
       </div>
 
       <div className="p-5 space-y-4">
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-2">
-            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Number of Minors</label>
-            <div className="grid grid-cols-4 gap-2">
-              {[0, 1, 2, 3].map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  onClick={() => updateSelectionCount(count)}
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${
-                    selectionCount === count
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  {count}
-                </button>
-              ))}
-            </div>
+          <div className="space-y-1">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Search Minors</label>
+            <input
+              type="text"
+              placeholder="e.g. Mathematics, Entrepreneurship..."
+              value={query}
+              onFocus={fetchPrograms}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full rounded-xl border border-zinc-300 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white transition-all shadow-sm"
+            />
+            {loading && <p className="text-xs text-zinc-400 px-1">Loading minors...</p>}
           </div>
 
-          {selectionCount > 0 && (
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Minor Choices</label>
-              <div className="space-y-2">
-                {Array.from({ length: selectionCount }).map((_, index) => {
-                  const selectedByOtherSlots = new Set(
-                    selectedPrograms.filter((name, selectedIndex) => selectedIndex !== index && name),
-                  );
-                  const availablePrograms = programs.filter((program) => !selectedByOtherSlots.has(program.name));
-                  const query = (searchQueries[index] ?? "").trim().toLowerCase();
-                  let filteredPrograms = query
-                    ? availablePrograms.filter((program) => matchesProgramQuery(program.name, query))
-                    : availablePrograms;
-                  const currentSelection = selectedPrograms[index];
-                  if (
-                    currentSelection &&
-                    !filteredPrograms.some((program) => program.name === currentSelection)
-                  ) {
-                    const currentProgram = availablePrograms.find((program) => program.name === currentSelection)
-                      ?? programs.find((program) => program.name === currentSelection);
-                    if (currentProgram) {
-                      filteredPrograms = [currentProgram, ...filteredPrograms];
-                    }
-                  }
-                  return (
-                    <div key={`minor-slot-${index}`} className="space-y-1">
-                      <input
-                        type="text"
-                        value={searchQueries[index] ?? selectedPrograms[index] ?? ""}
-                        onFocus={() => {
-                          fetchPrograms();
-                          setOpenDropdownIndex(index);
-                        }}
-                        onChange={(event) => handleSearchQueryChange(index, event.target.value)}
-                        onBlur={() => {
-                          window.setTimeout(() => setOpenDropdownIndex((prev) => (prev === index ? null : prev)), 100);
-                        }}
-                        placeholder="Search minors..."
-                        className="w-full rounded-xl border border-zinc-300 px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-black dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-white transition-all shadow-sm"
-                      />
-                      {openDropdownIndex === index && (
-                        <div className="max-h-44 overflow-auto rounded-xl border border-zinc-300 bg-white p-1 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-                          {filteredPrograms.length > 0 ? (
-                            filteredPrograms.slice(0, 50).map((program) => (
-                              <button
-                                key={`${index}-${program.name}`}
-                                type="button"
-                                onMouseDown={(event) => {
-                                  event.preventDefault();
-                                  handleProgramSelect(index, program.name);
-                                }}
-                                className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-800 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                              >
-                                {program.name}
-                              </button>
-                            ))
-                          ) : (
-                            <p className="px-2 py-2 text-[11px] text-zinc-400">No minors match that search.</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+          {fetched && filtered.length > 0 && (
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {filtered.map((p) => (
+                <label
+                  key={p.name}
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all text-sm ${selected === p.name
+                    ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
+                    : "border-zinc-200 hover:border-zinc-300 dark:border-zinc-800 dark:hover:border-zinc-700"
+                    }`}
+                >
+                  <input
+                    type="radio"
+                    name="minor"
+                    value={p.name}
+                    checked={selected === p.name}
+                    onChange={() => setSelected(p.name)}
+                    className="w-4 h-4 accent-black dark:accent-white shrink-0"
+                  />
+                  <span className="font-medium">{p.name}</span>
+                </label>
+              ))}
             </div>
           )}
-
-          {loading && <p className="text-xs text-zinc-400 px-1">Loading minors...</p>}
+          {fetched && filtered.length === 0 && query && (
+            <p className="text-xs text-zinc-400 px-1">No minors match your search.</p>
+          )}
 
           <button
             type="submit"
-            disabled={!isSelectionComplete}
+            disabled={!selected}
             className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed dark:bg-white dark:text-black shadow-sm"
           >
-            {selectionCount === 0 ? "Continue Without Minors" : `Confirm ${selectionCount} Minor${selectionCount > 1 ? "s" : ""}`}
+            Confirm Minor
           </button>
         </form>
+
+        <div className="relative flex items-center">
+          <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
+          <span className="mx-3 text-xs text-zinc-400">or</span>
+          <div className="flex-1 border-t border-zinc-200 dark:border-zinc-800" />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSkip}
+          className="w-full rounded-xl bg-zinc-100 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+        >
+          Skip — No Minor
+        </button>
       </div>
     </div>
   );
@@ -2350,7 +2232,7 @@ function QueryProgramsOptionsForm({ tool, addToolOutput, sendMessage }: { tool: 
 
 // ─── GenEdSelectionForm ────────────────────────────────────────────────
 // 1. Asks which catalog year applies (2024+ or pre-2024)
-// 2. Loads the corresponding requirements from /api/gen-ed (DB-backed)
+// 2. Loads the corresponding JSON from /api/gen-ed
 // 3. Shows each GE area as an accordion with a searchable course picker
 type GenEdCourse = { code: string | null; title: string | null; credits: number | { min: number; max: number } | null; status: string; notes?: string[] };
 type GenEdSubReq = { requirementId?: string; description: string; courses?: GenEdCourse[]; subRequirements?: GenEdSubReq[] };
@@ -2371,7 +2253,7 @@ function fmtCredits(credits: GenEdCourse['credits']): string {
   return `${credits.min}–${credits.max} cr`;
 }
 
-function GenEdSelectionForm({ tool, addToolOutput, sendMessage, planId, messages, transcriptCourses, onScaffoldUpdated, scaffoldChat, onAgentNotice }: { tool: any; addToolOutput: any; sendMessage: any; planId: string; messages: any[]; transcriptCourses: any[]; onScaffoldUpdated?: (scaffold: any) => void; scaffoldChat?: any; onAgentNotice?: (message: string) => void }) {
+function GenEdSelectionForm({ tool, addToolOutput, sendMessage, planId, messages, transcriptCourses, onScaffoldUpdated, scaffoldChat }: { tool: any; addToolOutput: any; sendMessage: any; planId: string; messages: any[]; transcriptCourses: any[]; onScaffoldUpdated?: (scaffold: any) => void; scaffoldChat?: any }) {
   const [year, setYear] = useState<'2024' | 'pre-2024' | null>(null);
   const [requirements, setRequirements] = useState<GenEdReq[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2531,13 +2413,10 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, planId, messages
         if (data.scaffold && onScaffoldUpdated) {
           onScaffoldUpdated(data.scaffold);
         }
-      }).catch((error) => {
-        reportClientError('gen_ed_scaffold_request_failed', error, { planId, phase: 'genEd' });
-      });
+      }).catch(console.error);
     }
 
     addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { catalogYear: year, genEdSelections: filteredSelections } });
-    onAgentNotice?.("I'm generating your graduation plan. This will take a moment.");
     sendMessage({ text: '[System: Gen Ed course selections submitted. Do not call requestUserPreferences. Now build the graduation plan in the Playground: use `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm` to place all remaining courses. Run `checkPlanHeuristics`; if there are warnings or unplanned courses, fix them and re-run. Repeat until clean, then call `addMilestones`. After milestones are inserted, call `requestPlanReview`.]' });
   };
 
@@ -2755,11 +2634,13 @@ function GenEdSelectionForm({ tool, addToolOutput, sendMessage, planId, messages
 interface ProgramReq {
   requirementId: number | string;
   description: string;
+  description_rule?: string;
   notes?: string;
   courses?: { code: string; title: string; credits: number; prerequisite?: string; status?: string }[];
   subRequirements?: {
     requirementId: string;
     description: string;
+    description_rule?: string;
     courses: { code: string; title: string; credits: number; prerequisite?: string; status?: string }[];
   }[];
   otherRequirement?: string;
@@ -2770,21 +2651,7 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
   const requirementsType = type === "graduate_no_gen_ed" ? "graduate_no_gen_ed" : type;
   const displayProgramLabel = type === "graduate_no_gen_ed" ? "Graduate Program" : type === "major" ? "Major" : "Minor";
   const scaffoldPhase = type === "minor" ? "minor" : "major";
-  const selectedProgramQueue: string[] = Array.isArray(tool.args?.selectedPrograms)
-    ? tool.args.selectedPrograms.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
-    : [];
-  const selectedProgramIdQueue: string[] = Array.isArray(tool.args?.selectedProgramIds)
-    ? tool.args.selectedProgramIds.filter((value: unknown): value is string => typeof value === "string" && value.trim().length > 0)
-    : [];
-  const rawCurrentIndex = typeof tool.args?.currentIndex === "number" ? tool.args.currentIndex : NaN;
-  const derivedCurrentIndex = selectedProgramQueue.findIndex((name) => name === programName);
-  const currentProgramIndex = Number.isFinite(rawCurrentIndex) && rawCurrentIndex >= 0
-    ? rawCurrentIndex
-    : derivedCurrentIndex >= 0
-      ? derivedCurrentIndex
-      : 0;
   const [requirements, setRequirements] = useState<ProgramReq[]>([]);
-  const [programId, setProgramId] = useState<string | number | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   // Multi-select: selections is now Record<slotId, string[]> instead of Record<slotId, string>
@@ -2806,15 +2673,61 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
     return () => clearTimeout(timer);
   }, [programName]);
 
-  function parseSlotInfo(desc: string, courseCount: number): { required: number; total: number } {
+  function parseSlotInfo(
+    desc: string,
+    courses: Array<{ credits: number }>,
+    ruleDesc?: string
+  ): { required: number; total: number; isHours: boolean; requiredHours: number; totalHours: number } {
+    const totalHours = courses.reduce((sum, c) => sum + (c.credits || 0), 0);
+    const parseText = [ruleDesc, desc]
+      .filter((value): value is string => typeof value === "string" && value.length > 0)
+      .join(" ");
+
+    // Prefer explicit hours semantics if present in rule text or label text.
+    const nHours = parseText.match(/Complete\s+(\d+(?:\.\d+)?)\s*(?:Credit\s*)?Hours?/i);
+    if (nHours) {
+      const requiredHours = Number(nHours[1]);
+      return {
+        required: 0,
+        total: totalHours,
+        isHours: true,
+        requiredHours,
+        totalHours,
+      };
+    }
+
     // "Complete 1 of 3 Courses"
-    const xOfY = desc.match(/Complete\s+(\d+)\s+of\s+(\d+)\s+Course/i);
-    if (xOfY) return { required: parseInt(xOfY[1]), total: parseInt(xOfY[2]) };
+    const xOfY = parseText.match(/Complete\s+(\d+)\s+of\s+(\d+)\s+Course/i);
+    if (xOfY) {
+      return {
+        required: parseInt(xOfY[1]),
+        total: parseInt(xOfY[2]),
+        isHours: false,
+        requiredHours: 0,
+        totalHours,
+      };
+    }
+
     // "Complete 6 Courses"
-    const nCourses = desc.match(/Complete\s+(\d+)\s+Course/i);
-    if (nCourses) return { required: parseInt(nCourses[1]), total: courseCount };
+    const nCourses = parseText.match(/Complete\s+(\d+)\s+Course/i);
+    if (nCourses) {
+      return {
+        required: parseInt(nCourses[1]),
+        total: courses.length,
+        isHours: false,
+        requiredHours: 0,
+        totalHours,
+      };
+    }
+
     // fallback
-    return { required: 1, total: courseCount };
+    return {
+      required: 1,
+      total: courses.length,
+      isHours: false,
+      requiredHours: 0,
+      totalHours,
+    };
   }
 
   function normCode(code: string): string {
@@ -2824,6 +2737,31 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
   // Helper: check if a course code appears in transcript
   function isCourseCompleted(code: string): boolean {
     return transcriptCodes.has(normCode(code));
+  }
+
+  function getSelectedHours(slot: { courses: { code: string; credits: number }[] }, selectedCodes: string[]): number {
+    const selectedSet = new Set(selectedCodes);
+    return slot.courses.reduce((sum, course) => (
+      selectedSet.has(course.code) ? sum + (course.credits || 0) : sum
+    ), 0);
+  }
+
+  function pickCoursesToReachHours(
+    courses: { code: string; credits: number }[],
+    targetHours: number
+  ): string[] {
+    const picked: string[] = [];
+    let total = 0;
+    for (const course of courses) {
+      picked.push(course.code);
+      total += course.credits || 0;
+      if (total >= targetHours) break;
+    }
+    return picked;
+  }
+
+  function formatHours(value: number): string {
+    return Number.isInteger(value) ? String(value) : value.toFixed(1);
   }
 
   useEffect(() => {
@@ -2838,11 +2776,6 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
         if (!res.ok) throw new Error('Failed to load requirements');
         const data = await res.json();
         const reqs: ProgramReq[] = data.programRequirements ?? [];
-        setProgramId(
-          data?.programId !== undefined && data?.programId !== null
-            ? data.programId
-            : null
-        );
         setRequirements(reqs);
         if (reqs.length > 0) setExpandedIds({ [String(reqs[0].requirementId)]: true });
 
@@ -2851,12 +2784,23 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
         for (const req of reqs) {
           for (const slot of getSlots(req)) {
             const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
-            const info = parseSlotInfo(slot.label, activeCourses.length);
+            const info = parseSlotInfo(slot.label, activeCourses, slot.ruleLabel);
 
             // Check transcript matches for this slot
             const transcriptMatches = activeCourses.filter(c => transcriptCodes.has(normCode(c.code)));
 
-            if (info.required === activeCourses.length) {
+            if (info.isHours) {
+              if (info.requiredHours >= info.totalHours) {
+                autoSelections[slot.id] = activeCourses.map(c => c.code);
+              } else {
+                const transcriptHours = transcriptMatches.reduce((sum, c) => sum + (c.credits || 0), 0);
+                if (transcriptHours >= info.requiredHours) {
+                  autoSelections[slot.id] = pickCoursesToReachHours(transcriptMatches, info.requiredHours);
+                } else if (transcriptMatches.length > 0) {
+                  autoSelections[slot.id] = transcriptMatches.map(c => c.code);
+                }
+              }
+            } else if (info.required === activeCourses.length) {
               // Must take all — auto-select all
               autoSelections[slot.id] = activeCourses.map(c => c.code);
             } else if (transcriptMatches.length >= info.required) {
@@ -2882,15 +2826,60 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
   }, [stableProgramName, transcriptCodes]);
 
   function getSlots(req: ProgramReq) {
-    const slots: { id: string; label: string; courses: NonNullable<ProgramReq['courses']> }[] = [];
-    if (req.courses?.length) slots.push({ id: String(req.requirementId), label: req.description, courses: req.courses });
+    const slots: { id: string; label: string; ruleLabel?: string; courses: NonNullable<ProgramReq['courses']> }[] = [];
+    if (req.courses?.length) slots.push({
+      id: String(req.requirementId),
+      label: req.description,
+      ruleLabel: req.description_rule,
+      courses: req.courses
+    });
     if (req.subRequirements) {
       for (const sub of req.subRequirements) {
-        if (sub.courses?.length) slots.push({ id: sub.requirementId, label: sub.description, courses: sub.courses });
+        if (sub.courses?.length) slots.push({
+          id: sub.requirementId,
+          label: sub.description,
+          ruleLabel: sub.description_rule,
+          courses: sub.courses
+        });
       }
     }
     return slots;
   }
+
+  function requirementNeedsAttention(req: ProgramReq): boolean {
+    for (const slot of getSlots(req)) {
+      const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
+      const info = parseSlotInfo(slot.label, activeCourses, slot.ruleLabel);
+      const selected = selections[slot.id] ?? [];
+      if (info.isHours) {
+        const selectedHours = getSelectedHours(slot, selected);
+        if (selectedHours < info.requiredHours) return true;
+      } else if (selected.length < info.required) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  useEffect(() => {
+    if (requirements.length === 0) return;
+    const idsNeedingAttention = requirements
+      .filter(requirementNeedsAttention)
+      .map((req) => String(req.requirementId));
+    if (idsNeedingAttention.length === 0) return;
+
+    setExpandedIds((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const id of idsNeedingAttention) {
+        if (!next[id]) {
+          next[id] = true;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [requirements, selections]);
 
   function toggleCourse(slotId: string, code: string, maxSelect: number) {
     setSelections(prev => {
@@ -2911,15 +2900,31 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
     requirements.forEach(req => {
       for (const slot of getSlots(req)) {
         const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
-        const { required } = parseSlotInfo(slot.label, activeCourses.length);
-        const current = (newSelections[slot.id] || []).length;
-        if (current < required) {
-          const toAdd = required - current;
-          const available = activeCourses.filter(c => !(newSelections[slot.id] || []).includes(c.code));
-          newSelections[slot.id] = [
-            ...(newSelections[slot.id] || []),
-            ...available.slice(0, toAdd).map(c => c.code)
-          ];
+        const info = parseSlotInfo(slot.label, activeCourses, slot.ruleLabel);
+        const currentSelections = newSelections[slot.id] || [];
+        if (info.isHours) {
+          const currentHours = getSelectedHours(slot, currentSelections);
+          if (currentHours < info.requiredHours) {
+            const available = activeCourses.filter(c => !currentSelections.includes(c.code));
+            let runningHours = currentHours;
+            const additions: string[] = [];
+            for (const course of available) {
+              additions.push(course.code);
+              runningHours += course.credits || 0;
+              if (runningHours >= info.requiredHours) break;
+            }
+            newSelections[slot.id] = [...currentSelections, ...additions];
+          }
+        } else {
+          const current = currentSelections.length;
+          if (current < info.required) {
+            const toAdd = info.required - current;
+            const available = activeCourses.filter(c => !currentSelections.includes(c.code));
+            newSelections[slot.id] = [
+              ...currentSelections,
+              ...available.slice(0, toAdd).map(c => c.code)
+            ];
+          }
         }
       }
     });
@@ -2943,7 +2948,6 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
               source: type === 'minor' ? 'minor' : 'major',
               requirementId: slot.id,
               requirementDescription: slot.label,
-              programId: programId != null ? String(programId) : undefined,
               fromTranscript: false,
             });
           }
@@ -2960,46 +2964,47 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
         { body: { planId, phase: scaffoldPhase, courses: selectedCourses, preferences } }
       );
     } else {
-      fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: scaffoldPhase, courses: selectedCourses }) }).catch((error) => {
-        reportClientError('program_scaffold_request_failed', error, { planId, phase: scaffoldPhase, programType: type });
-      });
+      fetch('/api/scaffold', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId, phase: scaffoldPhase, courses: selectedCourses }) }).catch(console.error);
     }
 
-    addToolOutput({
-      tool: tool.toolName,
-      toolCallId: tool.toolCallId,
-      output: {
-        programName,
-        programId: programId != null ? String(programId) : undefined,
-        currentIndex: currentProgramIndex,
-        selectedPrograms: selectedProgramQueue.length > 0 ? selectedProgramQueue : undefined,
-        selectedProgramIds: selectedProgramIdQueue.length > 0 ? selectedProgramIdQueue : undefined,
-        selectedCourses,
-        courseCount: selectedCourses.length,
-      }
-    });
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { programName, selectedCourses, courseCount: selectedCourses.length } });
 
-    const hasProgramQueue = selectedProgramQueue.length > 0;
-    const nextIndex = currentProgramIndex + 1;
-    const hasNextProgram = hasProgramQueue && nextIndex < selectedProgramQueue.length;
-    const nextProgramName = hasNextProgram ? selectedProgramQueue[nextIndex] : "";
-    const selectedProgramsJson = JSON.stringify(selectedProgramQueue);
-    const selectedProgramIdsJson = JSON.stringify(selectedProgramIdQueue);
-
-    const next = hasNextProgram
-      ? type === "minor"
-        ? `[System: Minor course selections submitted for "${programName}". Continue sequential processing. Now immediately call selectMinorCourses with programName="${nextProgramName}", currentIndex=${nextIndex}, selectedPrograms=${selectedProgramsJson}, selectedProgramIds=${selectedProgramIdsJson}.]`
-        : type === "graduate_no_gen_ed"
-          ? `[System: Graduate program selections are multi-program. Continue sequential processing. Now immediately call selectMajorCourses with programName="${nextProgramName}", programType="graduate_no_gen_ed", currentIndex=${nextIndex}, selectedPrograms=${selectedProgramsJson}, selectedProgramIds=${selectedProgramIdsJson}.]`
-          : `[System: Major course selections submitted for "${programName}". Continue sequential processing. Now immediately call selectMajorCourses with programName="${nextProgramName}", currentIndex=${nextIndex}, selectedPrograms=${selectedProgramsJson}, selectedProgramIds=${selectedProgramIdsJson}.]`
-      : type === 'graduate_no_gen_ed'
-        ? "[System: Graduate program course selections submitted. Do not call requestMinorSelection or selectGenEdCourses. Now build the graduation plan in the Playground: use `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm` to place all remaining courses. Run `checkPlanHeuristics`; if there are warnings or unplanned courses, fix them and re-run. Repeat until clean, then call `addMilestones`.]"
-        : type === 'major'
-          ? "[System: Major course selections submitted. Now immediately call requestMinorSelection - do not ask the user, just invoke the tool.]"
-          : studentType === 'honors'
-            ? "[System: Minor course selections submitted for an honors student. Now immediately call requestHonorsSelection - do not ask the user, just invoke the tool.]"
-            : "[System: Minor course selections submitted. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]";
+    const next = type === 'graduate_no_gen_ed'
+      ? "[System: Graduate program course selections submitted. Do not call requestMinorSelection or selectGenEdCourses. Now build the graduation plan in the Playground: use `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm` to place all remaining courses. Run `checkPlanHeuristics`; if there are warnings or unplanned courses, fix them and re-run. Repeat until clean, then call `addMilestones`.]"
+      : type === 'major'
+        ? "[System: Major course selections submitted. Now immediately call requestMinorSelection - do not ask the user, just invoke the tool.]"
+        : studentType === 'honors'
+          ? "[System: Minor course selections submitted for an honors student. Now immediately call requestHonorsSelection - do not ask the user, just invoke the tool.]"
+          : "[System: Minor course selections submitted. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]";
     sendMessage({ text: next });
+  };
+
+  const handleChooseDifferentMajor = () => {
+    setSubmitted(true);
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "change_major" } });
+    sendMessage({
+      text: type === "graduate_no_gen_ed"
+        ? `[System: User chose to change their graduate program selection while selecting courses for ${programName}. Now immediately call requestMajorSelection - do not ask the user, just invoke the tool.]`
+        : `[System: User chose to change their major selection while selecting courses for ${programName}. Now immediately call requestMajorSelection - do not ask the user, just invoke the tool.]`
+    });
+  };
+
+  const handleChooseDifferentMinor = () => {
+    setSubmitted(true);
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "change_minor" } });
+    sendMessage({
+      text: `[System: User chose to change their minor selection while selecting courses for ${programName}. Now immediately call requestMinorSelection - do not ask the user, just invoke the tool.]`
+    });
+  };
+
+  const handleContinueWithoutMinor = () => {
+    setSubmitted(true);
+    addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "skip_minor" } });
+    sendMessage({
+      text: studentType === "honors"
+        ? `[System: User chose to continue without a minor while selecting courses for ${programName}. This student is honors-track, so now immediately call requestHonorsSelection - do not ask the user, just invoke the tool.]`
+        : `[System: User chose to continue without a minor while selecting courses for ${programName}. Now immediately call selectGenEdCourses - do not ask the user, just invoke the tool.]`
+    });
   };
 
   const filledCount = Object.values(selections).flat().filter(Boolean).length;
@@ -3022,9 +3027,13 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
   const unsatisfiedCount = requirements.reduce((n, req) => {
     for (const slot of getSlots(req)) {
       const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
-      const { required } = parseSlotInfo(slot.label, activeCourses.length);
-      const selected = (selections[slot.id] ?? []).length;
-      if (selected < required) n++;
+      const info = parseSlotInfo(slot.label, activeCourses, slot.ruleLabel);
+      const selected = selections[slot.id] ?? [];
+      if (info.isHours) {
+        if (getSelectedHours(slot, selected) < info.requiredHours) n++;
+      } else if (selected.length < info.required) {
+        n++;
+      }
     }
     return n;
   }, 0);
@@ -3076,13 +3085,21 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
           {requirements.map(req => {
             const id = String(req.requirementId);
             const isOpen = !!expandedIds[id];
+            const needsAttention = requirementNeedsAttention(req);
             const slots = getSlots(req);
 
             return (
               <div key={id}>
                 <button type="button" onClick={() => setExpandedIds(p => ({ ...p, [id]: !p[id] }))}
                   className="w-full flex items-center justify-between px-5 py-3.5 text-left hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
-                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{req.description}</span>
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 truncate">{req.description}</span>
+                    {needsAttention && (
+                      <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full border border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+                        Needs attention
+                      </span>
+                    )}
+                  </div>
                   <span className="text-zinc-400 text-xs ml-2">{isOpen ? '▲' : '▼'}</span>
                 </button>
 
@@ -3095,20 +3112,24 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
 
                     {slots.map(slot => {
                       const activeCourses = slot.courses.filter(c => !c.status || c.status === 'active');
-                      const info = parseSlotInfo(slot.label, activeCourses.length);
+                      const info = parseSlotInfo(slot.label, activeCourses, slot.ruleLabel);
                       const q = searchQ[slot.id] ?? '';
                       const vis = q ? activeCourses.filter(c => c.code.toLowerCase().includes(q.toLowerCase()) || c.title.toLowerCase().includes(q.toLowerCase())) : activeCourses;
                       const sel = selections[slot.id] ?? [];
-                      const isAutoAll = info.required === activeCourses.length;
+                      const isAutoAll = info.isHours ? info.requiredHours >= info.totalHours : info.required === activeCourses.length;
+                      const selectedHours = info.isHours ? getSelectedHours(slot, sel) : 0;
 
                       // Check if requirement is fully fulfilled by transcript
                       const transcriptMatches = activeCourses.filter(c => isCourseCompleted(c.code));
-                      const isFulfilledByTranscript = transcriptMatches.length >= info.required;
+                      const transcriptHours = transcriptMatches.reduce((sum, c) => sum + (c.credits || 0), 0);
+                      const isFulfilledByTranscript = info.isHours
+                        ? transcriptHours >= info.requiredHours
+                        : transcriptMatches.length >= info.required;
 
                       return (
                         <div key={slot.id} className="space-y-2">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{slot.label}</p>
+                            <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{slot.ruleLabel || slot.label}</p>
                             {isAutoAll && (
                               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 font-medium">All required</span>
                             )}
@@ -3117,7 +3138,12 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
                                 <CheckCircle2 size={10} /> Requirement fulfilled
                               </span>
                             )}
-                            {!isAutoAll && info.required > 1 && (
+                            {info.isHours && (
+                              <span className="text-[10px] text-zinc-400">
+                                ({formatHours(selectedHours)}/{formatHours(info.requiredHours)} hours selected)
+                              </span>
+                            )}
+                            {!info.isHours && !isAutoAll && info.required > 1 && (
                               <span className="text-[10px] text-zinc-400">({sel.length}/{info.required} selected)</span>
                             )}
                           </div>
@@ -3142,11 +3168,11 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
                                     disabled={isDisabled}
                                     onChange={() => {
                                       if (isDisabled) return;
-                                      if (info.required === 1) {
+                                      if (!info.isHours && info.required === 1) {
                                         // Single-select: toggle off or replace
                                         setSelections(p => ({ ...p, [slot.id]: isSelected ? [] : [c.code] }));
                                       } else {
-                                        toggleCourse(slot.id, c.code, info.required);
+                                        toggleCourse(slot.id, c.code, info.isHours ? activeCourses.length : info.required);
                                       }
                                     }}
                                     className="w-3.5 h-3.5 accent-black dark:accent-white shrink-0" />
@@ -3186,17 +3212,53 @@ function ProgramCourseSelectionForm({ tool, addToolOutput, sendMessage, planId, 
               : `${unsatisfiedCount} requirement${unsatisfiedCount !== 1 ? 's' : ''} left to fill`}
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setSubmitted(true);
-              addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "skipped" } });
-              sendMessage({ text: `[System: User chose to skip selecting courses for ${displayProgramLabel}. Check with them on how they want to proceed or move to the next step.]` });
-            }}
-            className="w-full rounded-xl py-3 text-sm font-medium transition-all text-zinc-500 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            Skip / Choose Something Else
-          </button>
+          {type === "minor" ? (
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-3 space-y-2">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Minor Decision
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleChooseDifferentMinor}
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold transition-all border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-950/50"
+                >
+                  Choose Different Minor
+                </button>
+                <button
+                  type="button"
+                  onClick={handleContinueWithoutMinor}
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold transition-all border border-rose-300 bg-rose-50 text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
+                >
+                  Continue Without Minor
+                </button>
+              </div>
+            </div>
+          ) : type === "major" || type === "graduate_no_gen_ed" ? (
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/40 p-3 space-y-2">
+              <div>
+                <button
+                  type="button"
+                  onClick={handleChooseDifferentMajor}
+                  className="mx-auto block rounded-lg px-3 py-2.5 text-sm font-semibold transition-all border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300 dark:hover:bg-sky-950/50"
+                >
+                  {type === "graduate_no_gen_ed" ? "Choose Different Program" : "Choose Different Major"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setSubmitted(true);
+                addToolOutput({ tool: tool.toolName, toolCallId: tool.toolCallId, output: { action: "skipped" } });
+                sendMessage({ text: `[System: User chose to skip selecting courses for ${displayProgramLabel}. Check with them on how they want to proceed or move to the next step.]` });
+              }}
+              className="w-full rounded-xl py-3 text-sm font-medium transition-all text-zinc-500 hover:text-black dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Skip / Choose Something Else
+            </button>
+          )}
         </div>
       </form>
     </div>

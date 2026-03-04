@@ -33,6 +33,14 @@ const REPAIR_TOOL_NAMES = [
     'checkPlanHeuristics',
 ] as const satisfies readonly AgentToolName[];
 
+const STALL_RECOVERY_TOOL_NAMES = [
+    'getRemainingCoursesToPlan',
+    'addCoursesToTerm',
+    'removeCourseFromTerm',
+    'deleteTerm',
+    'checkPlanHeuristics',
+] as const satisfies readonly AgentToolName[];
+
 const MILESTONE_TOOL_NAMES = [
     'addMilestones',
     'insertMilestone',
@@ -201,33 +209,40 @@ const collectToolCallDebugMeta = (messages: unknown[]): Map<string, ToolCallDebu
     return byId;
 };
 
+const hasUnresolvedToolCall = (message: GenericObject): boolean => {
+    if (Array.isArray(message.toolInvocations)) {
+        for (const invocation of message.toolInvocations) {
+            if (!isObject(invocation)) continue;
+            if (typeof invocation.toolCallId !== 'string' || !invocation.toolCallId) continue;
+            if (!hasToolResultPayload(invocation)) return true;
+        }
+    }
+
+    if (Array.isArray(message.parts)) {
+        for (const part of message.parts) {
+            if (!isObject(part) || typeof part.type !== 'string') continue;
+            if (!part.type.startsWith('tool-') && part.type !== 'tool-call') continue;
+            if (typeof part.toolCallId !== 'string' || !part.toolCallId) continue;
+            if (!hasToolResultPayload(part)) return true;
+        }
+    }
+
+    return false;
+};
+
 const sanitizeMessagesForModel = (
     messages: ConvertToModelMessagesInput,
 ): ConvertToModelMessagesInput =>
-    (messages as unknown[]).map((message) => {
-        if (!isObject(message)) return message;
-        const nextMessage: GenericObject = { ...message };
-
-        if (Array.isArray(message.toolInvocations)) {
-            nextMessage.toolInvocations = message.toolInvocations.filter((invocation) => {
-                if (!isObject(invocation)) return true;
-                if (typeof invocation.toolCallId !== 'string' || !invocation.toolCallId) return true;
-                return hasToolResultPayload(invocation);
-            });
-        }
-
-        if (Array.isArray(message.parts)) {
-            nextMessage.parts = message.parts.filter((part) => {
-                if (!isObject(part)) return true;
-                if (typeof part.type !== 'string') return true;
-                if (!part.type.startsWith('tool-') && part.type !== 'tool-call') return true;
-                if (typeof part.toolCallId !== 'string' || !part.toolCallId) return true;
-                return hasToolResultPayload(part);
-            });
-        }
-
-        return nextMessage;
-    }) as ConvertToModelMessagesInput;
+    (messages as unknown[])
+        .flatMap((message) => {
+            if (!isObject(message)) return [message];
+            if (hasUnresolvedToolCall(message)) {
+                // Drop the entire message when tool calls are unresolved.
+                // Pruning individual parts can orphan OpenAI Responses `reasoning` items.
+                return [];
+            }
+            return [message];
+        }) as ConvertToModelMessagesInput;
 
 const getMessageText = (message: unknown): string => {
     if (!isObject(message)) return '';
@@ -310,6 +325,63 @@ const getLatestHeuristicsFromSteps = (steps: unknown[]): { isPlanSound: boolean;
     }
 
     return latest;
+};
+
+const getPlanStats = (planCandidate: unknown): { termCount: number; trailingTermCourseCount: number } | null => {
+    if (!Array.isArray(planCandidate)) return null;
+    const termCount = planCandidate.length;
+    if (termCount === 0) {
+        return { termCount: 0, trailingTermCourseCount: 0 };
+    }
+
+    const trailingTerm = planCandidate[termCount - 1];
+    if (!isObject(trailingTerm) || !Array.isArray(trailingTerm.courses)) {
+        return { termCount, trailingTermCourseCount: 0 };
+    }
+
+    return {
+        termCount,
+        trailingTermCourseCount: trailingTerm.courses.length,
+    };
+};
+
+const getRecentEditSnapshots = (
+    steps: unknown[],
+): Array<{ toolName: string; totalUnplanned: number; termCount: number; trailingTermCourseCount: number }> => {
+    const snapshots: Array<{ toolName: string; totalUnplanned: number; termCount: number; trailingTermCourseCount: number }> = [];
+
+    for (const step of steps) {
+        if (!isObject(step)) continue;
+        const toolResults = Array.isArray(step.toolResults) ? step.toolResults : [];
+
+        for (const toolResult of toolResults) {
+            if (!isObject(toolResult) || typeof toolResult.toolName !== 'string') continue;
+            if (!EDIT_TOOL_NAMES.has(toolResult.toolName)) continue;
+
+            const output = isObject(toolResult.output)
+                ? toolResult.output
+                : isObject(toolResult.result)
+                    ? toolResult.result
+                    : null;
+            if (!output) continue;
+
+            const totalUnplanned = typeof output.totalUnplanned === 'number'
+                ? output.totalUnplanned
+                : null;
+            const stats = getPlanStats(output.plan);
+
+            if (totalUnplanned === null || !stats) continue;
+
+            snapshots.push({
+                toolName: toolResult.toolName,
+                totalUnplanned,
+                termCount: stats.termCount,
+                trailingTermCourseCount: stats.trailingTermCourseCount,
+            });
+        }
+    }
+
+    return snapshots;
 };
 
 const hasRequiredMilestone = (milestones: ScaffoldState['milestones']): boolean =>
@@ -622,6 +694,35 @@ export async function POST(req: Request) {
                 warningsCount: liveHeuristics.warnings.length,
             };
             const isHeuristicsClean = effectiveHeuristics.isPlanSound && effectiveHeuristics.totalUnplanned === 0;
+            const liveTerms = Array.isArray(liveStateForHeuristics.terms) ? liveStateForHeuristics.terms : [];
+            const trailingLiveTerm = liveTerms[liveTerms.length - 1];
+            const trailingTermIsEmpty =
+                !!trailingLiveTerm &&
+                Array.isArray(trailingLiveTerm.courses) &&
+                trailingLiveTerm.courses.length === 0;
+            const recentEditSnapshots = getRecentEditSnapshots(steps);
+            const latestEditSnapshot = recentEditSnapshots[recentEditSnapshots.length - 1];
+            const previousEditSnapshot = recentEditSnapshots[recentEditSnapshots.length - 2];
+            const stalledEditLoop =
+                !!latestEditSnapshot &&
+                !!previousEditSnapshot &&
+                latestEditSnapshot.totalUnplanned >= previousEditSnapshot.totalUnplanned &&
+                latestEditSnapshot.termCount === previousEditSnapshot.termCount &&
+                latestEditSnapshot.trailingTermCourseCount === previousEditSnapshot.trailingTermCourseCount;
+
+            if (effectiveHeuristics.totalUnplanned > 0 && trailingTermIsEmpty) {
+                return {
+                    activeTools: [...STALL_RECOVERY_TOOL_NAMES],
+                    toolChoice: 'required',
+                };
+            }
+
+            if (effectiveHeuristics.totalUnplanned > 0 && stalledEditLoop) {
+                return {
+                    activeTools: [...REPAIR_TOOL_NAMES],
+                    toolChoice: 'required',
+                };
+            }
 
             const lastStep = steps[steps.length - 1];
             const lastStepHadEdit = isObject(lastStep) && Array.isArray(lastStep.toolResults)
@@ -725,12 +826,12 @@ export async function POST(req: Request) {
             "   - If result contains action='needsHelp' → call requestCareerQuestionnaire, wait for answers, " +
             "     then call queryPrograms with programType='graduate_no_gen_ed' when studentType='graduate', otherwise programType='major'. " +
             "     Then call presentMajorOptions with the 3 recommendedPrograms. Wait for the user to pick one. Then move to STEP 3. " +
-            "STEP 3: Call selectMajorCourses with programName set to the selected program. If requestMajorSelection returns selectedPrograms (array), process them sequentially: start index 0, pass selectedPrograms/selectedProgramIds/currentIndex, and repeat until all are completed. If studentType='graduate', pass programType='graduate_no_gen_ed'. Wait for each submission before continuing. " +
+            "STEP 3: Call selectMajorCourses with programName set to the selected program. If requestMajorSelection returns selectedPrograms (array), process them sequentially: start index 0, pass selectedPrograms/selectedProgramIds/currentIndex, and repeat until all are completed. If studentType='graduate', pass programType='graduate_no_gen_ed'. If selectMajorCourses result.action='change_major', immediately call requestMajorSelection again. Wait for each submission before continuing. " +
             "STEP 4: If studentType='graduate', skip STEPS 4-7 and go directly to STEP 8. Otherwise call requestMinorSelection and wait for submit/skip. " +
-            "STEP 5: If minors were selected, call selectMinorCourses sequentially (same array/index pattern) until all selected minors are completed. If skipped, continue. " +
+            "STEP 5: If minors were selected, call selectMinorCourses sequentially (same array/index pattern) until all selected minors are completed. Distinguish skip outcomes: if result.action='change_minor', immediately call requestMinorSelection again; if result.action='skip_minor', continue as no-minor; other skipped outcomes may continue. " +
             "STEP 6: If studentType='honors', call requestHonorsSelection and wait for acknowledgment. " +
             "STEP 7: For non-graduate students, call selectGenEdCourses and wait for GE selections. " +
-            "STEP 8: Build the graduation plan visually in the Playground using `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm`. Do NOT use generateGradPlanScaffold. Pacing rules: if graduationPace='fast', use every term in sequence (Fall/Winter/Spring/Summer) with no skipped terms while courses remain; if graduationPace='sustainable', prefer Fall/Winter and only use Spring/Summer near the end to avoid waiting; if graduationPace='undecided', avoid Spring/Summer until a major is chosen. Run `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, perform minimal local fixes (move one course at a time; create the next chronological term only when needed), then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. " +
+            "STEP 8: Build the graduation plan visually in the Playground using `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm`. Do NOT use generateGradPlanScaffold. Pacing rules: if graduationPace='fast', use every term in sequence (Fall/Winter/Spring/Summer) with no skipped terms while courses remain; if graduationPace='sustainable', prefer Fall/Winter and only use Spring/Summer near the end to avoid waiting; if graduationPace='undecided', avoid Spring/Summer until a major is chosen. Run `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, perform minimal local fixes (move one course at a time; create the next chronological term only when needed), then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. If progress stalls (e.g., empty term created but unplanned courses remain), immediately call `getRemainingCoursesToPlan` and then place courses into an existing term or remove the empty term before creating any new term. " +
             "STEP 9: After STEP 8 is clean, call addMilestones and wait for user input. Then call insertMilestone for each selected milestone. `Apply For Graduation` is required and must be placed before the final semester. " +
             "STEP 10: Only after heuristics are clean, all selected courses are placed, and `Apply For Graduation` is inserted, call requestPlanReview. " +
             "   If the user wants to iterate, refine using tools then call requestPlanReview again. " +
