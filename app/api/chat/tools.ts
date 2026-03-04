@@ -9,6 +9,7 @@ import { store, ScaffoldMilestone, ScaffoldState } from '../store';
 export type HeuristicViolationType =
   | 'overMax'
   | 'underMin'
+  | 'emptyTerm'
   | 'duplicateCourse'
   | 'unplannedCourse'
   | 'missingPrerequisite'
@@ -330,6 +331,20 @@ export const evaluatePlanHeuristics = (state: ScaffoldState): PlanHeuristicsSumm
     const actualCredits = getActualTermCredits(term);
     const { currentMax, currentMin } = getTermCreditLimits(term.term, state.preferences);
     const isFinalGraduatingTerm = i === lastNonEmptyTermIndex && totalUnplanned === 0;
+
+    if (actualCredits === 0) {
+      const emptyTermWarning =
+        totalUnplanned > 0
+          ? `Term ${term.term} has 0 credits while ${totalUnplanned} course(s) remain unplanned. Fill it or delete it before adding more terms.`
+          : `Term ${term.term} has 0 credits. Delete empty terms before finalizing the plan.`;
+      warnings.push(emptyTermWarning);
+      violations.push({
+        type: 'emptyTerm',
+        termName: term.term,
+        actualCredits: 0,
+      });
+      continue;
+    }
 
     if (actualCredits > currentMax) {
       warnings.push(`Term ${term.term} exceeds max credits (${actualCredits} > ${currentMax}).`);

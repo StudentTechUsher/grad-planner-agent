@@ -395,7 +395,7 @@ export default function Home() {
 
   // Extract progress from creditsCalculator tool and JSON scaffold from generateGradPlanScaffold
   useEffect(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
+    for (let i = 0; i < messages.length; i++) {
       const msg = messages[i] as any;
 
       let tools = msg.toolInvocations || [];
@@ -452,7 +452,7 @@ export default function Home() {
     }
 
     // Process scaffoldChat messages for plan updates and workflow steps
-    for (let i = scaffoldChat.messages.length - 1; i >= 0; i--) {
+    for (let i = 0; i < scaffoldChat.messages.length; i++) {
       const msg = scaffoldChat.messages[i] as any;
       const tools = msg.toolInvocations || [];
       if (tools.length > 0) {
@@ -460,15 +460,27 @@ export default function Home() {
           if (tool.toolName === "updateGradPlan" && tool.state === "result") {
             // When tool is complete, use the rigorously enforced plan returned from the backend
             if (tool.result?.plan) {
-              setLiveJson({ plan: tool.result.plan });
+              setLiveJson((prev: any) => ({
+                ...(prev ?? {}),
+                plan: tool.result.plan,
+                milestones: Array.isArray(tool.result?.milestones) ? tool.result.milestones : (prev?.milestones ?? []),
+              }));
             } else {
-              setLiveJson({ plan: tool.args.terms });
+              setLiveJson((prev: any) => ({
+                ...(prev ?? {}),
+                plan: tool.args.terms,
+                milestones: prev?.milestones ?? [],
+              }));
             }
           } else if (tool.toolName === "updateGradPlan") {
             try {
               const args = typeof tool.args === 'string' ? JSON.parse(tool.args) : tool.args;
               if (args?.terms) {
-                setLiveJson({ plan: args.terms }); // Partial streaming update
+                setLiveJson((prev: any) => ({
+                  ...(prev ?? {}),
+                  plan: args.terms,
+                  milestones: prev?.milestones ?? [],
+                })); // Partial streaming update
               }
             } catch (e) { }
           }
@@ -613,6 +625,9 @@ export default function Home() {
                     {remainingCoursesStatus.totalUnplanned}
                   </span>
                 </div>
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  Updated via <code>{remainingCoursesStatus.sourceTool}</code>
+                </p>
 
                 {remainingCoursesStatus.remainingCourses.length > 0 ? (
                   <div className="mt-3 max-h-48 overflow-y-auto space-y-1.5 pr-1">

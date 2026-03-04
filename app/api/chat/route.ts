@@ -694,6 +694,9 @@ export async function POST(req: Request) {
                 warningsCount: liveHeuristics.warnings.length,
             };
             const isHeuristicsClean = effectiveHeuristics.isPlanSound && effectiveHeuristics.totalUnplanned === 0;
+            const hasEmptyTermViolation = liveHeuristics.violations.some(
+                (violation) => violation.type === 'emptyTerm',
+            );
             const liveTerms = Array.isArray(liveStateForHeuristics.terms) ? liveStateForHeuristics.terms : [];
             const trailingLiveTerm = liveTerms[liveTerms.length - 1];
             const trailingTermIsEmpty =
@@ -717,6 +720,13 @@ export async function POST(req: Request) {
                 };
             }
 
+            if (effectiveHeuristics.totalUnplanned > 0 && hasEmptyTermViolation) {
+                return {
+                    activeTools: [...STALL_RECOVERY_TOOL_NAMES],
+                    toolChoice: 'required',
+                };
+            }
+
             if (effectiveHeuristics.totalUnplanned > 0 && stalledEditLoop) {
                 return {
                     activeTools: [...REPAIR_TOOL_NAMES],
@@ -731,7 +741,7 @@ export async function POST(req: Request) {
                 )
                 : false;
 
-            if (lastStepHadEdit) {
+            if (lastStepHadEdit && !isHeuristicsClean) {
                 return {
                     activeTools: [...REPAIR_TOOL_NAMES],
                     toolChoice: 'required',

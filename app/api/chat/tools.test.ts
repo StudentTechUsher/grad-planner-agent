@@ -122,6 +122,48 @@ describe('evaluatePlanHeuristics', () => {
     expect(result.isPlanSound).toBe(true);
   });
 
+  it('flags empty terms while courses remain unplanned', () => {
+    const state = mkState({
+      terms: [
+        {
+          term: 'Fall 2026',
+          courses: [],
+          credits_planned: 0,
+        },
+      ],
+      allCourses: [mkCourse('IS 401', 3)],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.violations.some((v) => v.type === 'emptyTerm' && v.termName === 'Fall 2026')).toBe(true);
+    expect(result.isPlanSound).toBe(false);
+  });
+
+  it('flags empty terms even when all courses are already placed', () => {
+    const state = mkState({
+      terms: [
+        {
+          term: 'Fall 2026',
+          courses: [mkCourse('IS 401', 3)],
+          credits_planned: 3,
+        },
+        {
+          term: 'Winter 2027',
+          courses: [],
+          credits_planned: 0,
+        },
+      ],
+      allCourses: [mkCourse('IS 401', 3)],
+    });
+
+    const result = evaluatePlanHeuristics(state);
+
+    expect(result.totalUnplanned).toBe(0);
+    expect(result.violations.some((v) => v.type === 'emptyTerm' && v.termName === 'Winter 2027')).toBe(true);
+    expect(result.isPlanSound).toBe(false);
+  });
+
   it('flags duplicate course placement across terms', () => {
     const dup = mkCourse('IS 350', 3);
     const state = mkState({

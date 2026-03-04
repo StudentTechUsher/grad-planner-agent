@@ -6,15 +6,29 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 const HANDOFFS_TABLE = process.env.AGENT_HANDOFFS_TABLE || 'agent_handoffs';
+const FALLBACK_RELAUNCH_URL = 'https://app.stuplanning.com/grad-plan';
 
-const redirectToRelaunch = (reason: string) =>
-  NextResponse.redirect(getAgentRelaunchUrl(reason), { status: 302 });
+const redirectToRelaunch = (reason: string) => {
+  try {
+    return NextResponse.redirect(getAgentRelaunchUrl(reason), { status: 302 });
+  } catch {
+    const fallback = new URL(FALLBACK_RELAUNCH_URL);
+    fallback.searchParams.set('reason', reason);
+    return NextResponse.redirect(fallback, { status: 302 });
+  }
+};
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('token');
   if (!token) return redirectToRelaunch('missing_handoff_token');
 
-  const claims = verifyHandoffToken(token);
+  let claims: ReturnType<typeof verifyHandoffToken> = null;
+  try {
+    claims = verifyHandoffToken(token);
+  } catch (error) {
+    console.error('[auth/handoff] Token verification threw unexpectedly.', error);
+    return redirectToRelaunch('handoff_verification_failed');
+  }
   if (!claims) return redirectToRelaunch('invalid_handoff_token');
 
   try {
@@ -55,7 +69,8 @@ export async function GET(req: NextRequest) {
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error('[auth/handoff] Failed to consume handoff token.', error);
     return redirectToRelaunch('handoff_consume_failed');
   }
 }
