@@ -31,6 +31,15 @@ type BootstrapPayload = {
   relaunchUrl?: string;
 };
 
+type ConversationResolvePayload = {
+  sessionId?: string;
+  source?: "requested" | "latest" | "created";
+  chatMessages?: any[];
+  stateSnapshot?: Record<string, any>;
+  updatedAt?: string;
+  error?: string;
+};
+
 const CLIENT_RELAUNCH_URL =
   process.env.NEXT_PUBLIC_AGENT_RELAUNCH_URL || "https://app.stuplanning.com/grad-plan";
 
@@ -109,7 +118,10 @@ function suggestPlanName(planData: any): string {
 }
 
 export default function Home() {
-  const [planId] = useState(() => crypto.randomUUID());
+  const [planId, setPlanId] = useState(() => crypto.randomUUID());
+  const [sessionResolved, setSessionResolved] = useState(false);
+  const [isConversationPersistenceEnabled, setIsConversationPersistenceEnabled] = useState(false);
+  const [initialChatMessages, setInitialChatMessages] = useState<any[]>([]);
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>("authenticating");
   const [authError, setAuthError] = useState<string>("");
   const [relaunchUrl, setRelaunchUrl] = useState<string>(CLIENT_RELAUNCH_URL);
@@ -120,6 +132,7 @@ export default function Home() {
     // @ts-ignore
     api: `/api/chat?planId=${planId}`,
     id: `chat-${planId}`,
+    messages: initialChatMessages,
   });
   // @ts-ignore
   const scaffoldChat = useChat({ api: '/api/scaffold', id: `scaffold-${planId}` });
@@ -198,6 +211,8 @@ export default function Home() {
   const [isPlanSound, setIsPlanSound] = useState(false);
   const [showDevToolLog, setShowDevToolLog] = useState(false);
   const isDevBuild = process.env.NODE_ENV !== "production";
+  const lastSyncedPayloadRef = useRef<string>("");
+  const inFlightSyncPayloadRef = useRef<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -213,32 +228,104 @@ export default function Home() {
           setSessionStatus("unauthenticated");
           setAuthError(typeof payload?.error === "string" ? payload.error : "Authentication session is not valid.");
           setRelaunchUrl(payload?.relaunchUrl || CLIENT_RELAUNCH_URL);
+          setSessionResolved(true);
+          setIsConversationPersistenceEnabled(false);
           return;
         }
 
-        setBootstrap(payload.bootstrap ?? null);
+        let resolvedConversation: ConversationResolvePayload | null = null;
+        try {
+          const requestedSessionId =
+            typeof window !== "undefined"
+              ? new URL(window.location.href).searchParams.get("sessionId") || undefined
+              : undefined;
 
-        const bootstrapTranscript = Array.isArray(payload.bootstrap?.transcriptCourses)
-          ? payload.bootstrap?.transcriptCourses
+          const resolveRes = await fetch("/api/session/conversation/resolve", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requestedSessionId }),
+          });
+          const resolvePayload: ConversationResolvePayload = await resolveRes.json();
+          if (resolveRes.ok) {
+            resolvedConversation = resolvePayload;
+          }
+        } catch {
+          // Keep legacy behavior if conversation resolve fails.
+          resolvedConversation = null;
+        }
+
+        const snapshot = resolvedConversation?.stateSnapshot ?? {};
+        const snapshotLiveJson = snapshot && typeof snapshot.liveJson === "object" ? snapshot.liveJson : null;
+        const snapshotPreferences = snapshot && typeof snapshot.preferences === "object" ? snapshot.preferences : null;
+        const snapshotTranscriptCourses = Array.isArray(snapshot?.transcriptCourses) ? snapshot.transcriptCourses : null;
+        const snapshotTranscriptSummary = typeof snapshot?.transcriptSummary === "string" ? snapshot.transcriptSummary : null;
+
+        const mergedBootstrap: BootstrapPayload["bootstrap"] = {
+          ...(payload.bootstrap ?? {}),
+          preferences: {
+            ...(payload.bootstrap?.preferences ?? {}),
+            ...(snapshotPreferences ?? {}),
+          },
+          transcriptCourses: snapshotTranscriptCourses ?? payload.bootstrap?.transcriptCourses ?? [],
+          transcriptSummary: snapshotTranscriptSummary ?? payload.bootstrap?.transcriptSummary ?? "",
+          priorPlanMeta: {
+            ...(payload.bootstrap?.priorPlanMeta ?? {}),
+            plan: Array.isArray(snapshotLiveJson?.plan)
+              ? snapshotLiveJson.plan
+              : payload.bootstrap?.priorPlanMeta?.plan ?? [],
+            milestones: Array.isArray(snapshotLiveJson?.milestones)
+              ? snapshotLiveJson.milestones
+              : payload.bootstrap?.priorPlanMeta?.milestones ?? [],
+          },
+        };
+
+        setBootstrap(mergedBootstrap);
+
+        const bootstrapTranscript = Array.isArray(mergedBootstrap?.transcriptCourses)
+          ? mergedBootstrap.transcriptCourses
           : [];
         if (bootstrapTranscript.length > 0) {
           setTranscriptCourses(bootstrapTranscript);
         }
 
-        if (payload.bootstrap?.priorPlanMeta?.plan && Array.isArray(payload.bootstrap.priorPlanMeta.plan)) {
+        if (Array.isArray(mergedBootstrap?.priorPlanMeta?.plan) && mergedBootstrap.priorPlanMeta.plan.length > 0) {
           setLiveJson({
-            plan: payload.bootstrap.priorPlanMeta.plan,
-            milestones: Array.isArray(payload.bootstrap.priorPlanMeta.milestones)
-              ? payload.bootstrap.priorPlanMeta.milestones
+            plan: mergedBootstrap.priorPlanMeta.plan,
+            milestones: Array.isArray(mergedBootstrap.priorPlanMeta.milestones)
+              ? mergedBootstrap.priorPlanMeta.milestones
               : [],
           });
         }
 
+        if (
+          resolvedConversation &&
+          typeof resolvedConversation.sessionId === "string" &&
+          resolvedConversation.sessionId.length > 0
+        ) {
+          setInitialChatMessages(Array.isArray(resolvedConversation.chatMessages) ? resolvedConversation.chatMessages : []);
+          setPlanId(resolvedConversation.sessionId);
+
+          if (typeof window !== "undefined") {
+            const url = new URL(window.location.href);
+            if (url.searchParams.get("sessionId") !== resolvedConversation.sessionId) {
+              url.searchParams.set("sessionId", resolvedConversation.sessionId);
+              window.history.replaceState({}, "", url.toString());
+            }
+          }
+          setIsConversationPersistenceEnabled(true);
+        } else {
+          setIsConversationPersistenceEnabled(false);
+        }
+
         setSessionStatus("authenticated");
+        setSessionResolved(true);
       } catch (error) {
         if (cancelled) return;
         setSessionStatus("unauthenticated");
         setAuthError(error instanceof Error ? error.message : "Failed to validate authentication session.");
+        setSessionResolved(true);
+        setIsConversationPersistenceEnabled(false);
       }
     };
 
@@ -248,6 +335,58 @@ export default function Home() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!sessionResolved || sessionStatus !== "authenticated") return;
+    if (!isConversationPersistenceEnabled) return;
+    if (status !== "ready") return;
+    if (!planId) return;
+    const latestPreferences =
+      getLatestPreferencesFromMessages(messages as any[]) ?? bootstrap?.preferences ?? {};
+
+    const stateSnapshot = {
+      liveJson: liveJson ?? null,
+      preferences: (latestPreferences && typeof latestPreferences === "object") ? latestPreferences : {},
+      transcriptCourses: Array.isArray(transcriptCourses) ? transcriptCourses : [],
+      transcriptSummary: typeof bootstrap?.transcriptSummary === "string" ? bootstrap.transcriptSummary : "",
+    };
+
+    const payload = {
+      chatMessages: messages,
+      stateSnapshot,
+    };
+    const serializedPayload = JSON.stringify(payload);
+    if (serializedPayload === lastSyncedPayloadRef.current) return;
+    if (serializedPayload === inFlightSyncPayloadRef.current) return;
+
+    const timeoutId = setTimeout(async () => {
+      inFlightSyncPayloadRef.current = serializedPayload;
+      try {
+        const res = await fetch(`/api/session/conversation/${planId}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: serializedPayload,
+        });
+
+        if (res.ok) {
+          lastSyncedPayloadRef.current = serializedPayload;
+          return;
+        }
+
+        if (res.status === 413) {
+          console.warn("Session payload too large; skipping sync for this snapshot.");
+          return;
+        }
+      } catch {
+        console.warn("Session sync failed; will retry on next state change.");
+      } finally {
+        inFlightSyncPayloadRef.current = "";
+      }
+    }, 700);
+
+    return () => clearTimeout(timeoutId);
+  }, [sessionResolved, sessionStatus, isConversationPersistenceEnabled, status, planId, messages, liveJson, transcriptCourses, bootstrap?.preferences, bootstrap?.transcriptSummary]);
 
   const preferences = useMemo(
     () => getLatestPreferencesFromMessages(messages as any[]) ?? bootstrap?.preferences,
@@ -2106,34 +2245,79 @@ function MajorOptionsForm({ tool, addToolOutput, sendMessage }: { tool: any, add
 }
 
 // ─── CareerQuestionnaireForm ───────────────────────────────────────────
-const CAREER_QUESTIONS = [
-  { id: "q1", label: "What is something you are naturally good at?", placeholder: "e.g. problem-solving, communicating with people, writing..." },
-  { id: "q2", label: "Do you prefer deep technical work or social-facing roles?", placeholder: "e.g. I love coding and building systems, or I thrive working with clients..." },
-  { id: "q3", label: "How much do you value flexibility and remote work?", placeholder: "e.g. Very important — I want to work anywhere, or I prefer an office..." },
-  { id: "q4", label: "Do you prefer solving new, complex problems or following a structured routine?", placeholder: "e.g. I love tackling open-ended challenges..." },
-  { id: "q5", label: "Is high earning potential your primary motivator, or is work-life balance more important?", placeholder: "e.g. Earnings matter most to me right now, or balance and purpose..." },
-  { id: "q6", label: "Describe the type of impact you'd like your career to have:", placeholder: "e.g. Build products used by millions, help individuals in my community..." },
+type CareerQuestion =
+  | { id: string; label: string; type: "text"; placeholder: string }
+  | { id: string; label: string; type: "multipleChoice"; options: string[]; otherLabel?: string };
+
+const CAREER_QUESTIONS: CareerQuestion[] = [
+  { id: "q1", label: "What is something you are naturally good at?", type: "text", placeholder: "e.g. problem-solving, communicating with people, writing..." },
+  {
+    id: "q2",
+    label: "Do you prefer deep technical work or social-facing roles?",
+    type: "multipleChoice",
+    options: [
+      "Deep technical work (building systems, coding, analysis)",
+      "Social-facing work (clients, teams, communication)",
+      "A balanced mix of both",
+    ],
+    otherLabel: "Other (type your own)",
+  },
+  { id: "q3", label: "How much do you value flexibility and remote work?", type: "text", placeholder: "e.g. Very important — I want to work anywhere, or I prefer an office..." },
+  { id: "q4", label: "Do you prefer solving new, complex problems or following a structured routine?", type: "text", placeholder: "e.g. I love tackling open-ended challenges..." },
+  {
+    id: "q5",
+    label: "Is high earning potential your primary motivator, or is work-life balance more important?",
+    type: "multipleChoice",
+    options: [
+      "High earning potential is my top priority",
+      "Work-life balance and wellbeing are more important",
+      "I want a strong balance of both",
+    ],
+    otherLabel: "Other (type your own)",
+  },
+  { id: "q6", label: "Describe the type of impact you'd like your career to have:", type: "text", placeholder: "e.g. Build products used by millions, help individuals in my community..." },
 ];
+
+const CAREER_OTHER_VALUE = "__other__";
 
 function CareerQuestionnaireForm({ tool, addToolOutput, sendMessage }: { tool: any, addToolOutput: any, sendMessage: any }) {
   const [answers, setAnswers] = useState<Record<string, string>>(
     Object.fromEntries(CAREER_QUESTIONS.map(q => [q.id, ""]))
   );
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>(
+    Object.fromEntries(CAREER_QUESTIONS.filter((q) => q.type === "multipleChoice").map((q) => [q.id, ""]))
+  );
 
-  const allAnswered = CAREER_QUESTIONS.every(q => answers[q.id].trim().length > 0);
+  const getAnswerForQuestion = (question: CareerQuestion): string => {
+    if (question.type === "multipleChoice") {
+      const selected = selectedOptions[question.id];
+      if (selected === CAREER_OTHER_VALUE) {
+        return answers[question.id].trim();
+      }
+      return (selected || "").trim();
+    }
+    return answers[question.id].trim();
+  };
+
+  const allAnswered = CAREER_QUESTIONS.every((q) => getAnswerForQuestion(q).length > 0);
+  const unansweredCount = CAREER_QUESTIONS.filter((q) => getAnswerForQuestion(q).length === 0).length;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!allAnswered) return;
 
     // Build a structured summary for the AI / queryPrograms tool
-    const userContext = CAREER_QUESTIONS.map(q => `${q.label}\n${answers[q.id].trim()}`).join("\n\n");
+    const normalizedAnswers = CAREER_QUESTIONS.map((q) => ({
+      question: q.label,
+      answer: getAnswerForQuestion(q),
+    }));
+    const userContext = normalizedAnswers.map((entry) => `${entry.question}\n${entry.answer}`).join("\n\n");
 
     addToolOutput({
       tool: tool.toolName,
       toolCallId: tool.toolCallId,
       output: {
-        answers: CAREER_QUESTIONS.map(q => ({ question: q.label, answer: answers[q.id].trim() })),
+        answers: normalizedAnswers,
         userContext,
       }
     });
@@ -2153,13 +2337,52 @@ function CareerQuestionnaireForm({ tool, addToolOutput, sendMessage }: { tool: a
               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 text-[10px] font-bold mr-1.5">{i + 1}</span>
               {q.label}
             </label>
-            <textarea
-              rows={2}
-              value={answers[q.id]}
-              onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
-              placeholder={q.placeholder}
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm resize-none leading-relaxed placeholder:text-zinc-400"
-            />
+            {q.type === "multipleChoice" ? (
+              <div className="space-y-2">
+                {[...q.options, q.otherLabel ?? "Other (type your own)"].map((option, index, allOptions) => {
+                  const isOtherOption = index === allOptions.length - 1;
+                  const optionValue = isOtherOption ? CAREER_OTHER_VALUE : option;
+                  const isSelected = selectedOptions[q.id] === optionValue;
+                  return (
+                    <label
+                      key={`${q.id}-${optionValue}`}
+                      className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-xs cursor-pointer transition-colors ${isSelected
+                        ? "border-black bg-zinc-50 dark:border-white dark:bg-zinc-900"
+                        : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
+                        }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`career-${q.id}`}
+                        checked={isSelected}
+                        onChange={() =>
+                          setSelectedOptions((prev) => ({ ...prev, [q.id]: optionValue }))
+                        }
+                        className="mt-0.5 w-3.5 h-3.5 accent-black dark:accent-white shrink-0"
+                      />
+                      <span className="text-zinc-700 dark:text-zinc-300">{option}</span>
+                    </label>
+                  );
+                })}
+                {selectedOptions[q.id] === CAREER_OTHER_VALUE && (
+                  <textarea
+                    rows={2}
+                    value={answers[q.id]}
+                    onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                    placeholder="Share your custom answer..."
+                    className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm resize-none leading-relaxed placeholder:text-zinc-400"
+                  />
+                )}
+              </div>
+            ) : (
+              <textarea
+                rows={2}
+                value={answers[q.id]}
+                onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                placeholder={q.placeholder}
+                className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3.5 py-2.5 text-sm outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all shadow-sm resize-none leading-relaxed placeholder:text-zinc-400"
+              />
+            )}
           </div>
         ))}
         <button
@@ -2167,7 +2390,7 @@ function CareerQuestionnaireForm({ tool, addToolOutput, sendMessage }: { tool: a
           disabled={!allAnswered}
           className="w-full rounded-xl bg-black py-3 text-sm font-medium text-white transition-transform hover:scale-[1.02] disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed dark:bg-white dark:text-black shadow-sm"
         >
-          {allAnswered ? "Find My Major" : `Answer all ${CAREER_QUESTIONS.filter(q => !answers[q.id].trim()).length} remaining questions`}
+          {allAnswered ? "Find My Major" : `Answer all ${unansweredCount} remaining questions`}
         </button>
       </form>
     </div>

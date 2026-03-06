@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerError, captureServerEvent } from '@/lib/posthogServer';
 import { store } from '@/app/api/store';
 import { evaluatePlanHeuristics } from '@/app/api/chat/tools';
+import { loadStateFromSessionSnapshot } from '@/lib/aiSessions';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -439,7 +440,34 @@ export async function POST(req: Request) {
   }
   const planName = resolvePlanName(body) || 'My Graduation Plan';
 
-  const state = store.get(planId);
+  let state = store.get(planId);
+  if (!state) {
+    try {
+      const supabaseAdmin = getSupabaseAdminClient();
+      const recoveredState = await loadStateFromSessionSnapshot({
+        supabaseAdmin,
+        userId: session.userId,
+        sessionId: planId,
+      });
+
+      if (recoveredState) {
+        if (!recoveredState.userId) {
+          recoveredState.userId = session.userId;
+        }
+        store.set(planId, recoveredState);
+        state = recoveredState;
+
+        void captureServerEvent('finalize_state_recovered_from_ai_session', 'info', {
+          route: '/api/plan/finalize',
+          request: req,
+          distinctId: session.userId,
+          properties: { planId },
+        });
+      }
+    } catch {
+      // Non-blocking fallback path. Existing 404 behavior remains if recovery fails.
+    }
+  }
   if (!state) {
     return jsonWithSession({ error: 'Plan state not found.' }, { status: 404 });
   }

@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateObject, streamText, tool } from 'ai';
+import { streamText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
+import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerError, captureServerEvent } from '@/lib/posthogServer';
+import {
+    buildSessionSnapshotFromStoreState,
+    saveSessionStateSnapshot,
+    loadStateFromSessionSnapshot,
+} from '@/lib/aiSessions';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 let heuristicsContext: string | null = null;
 let examplesContext: string | null = null;// ─── In-memory scaffold state ──────────────────────────────────────────
@@ -27,10 +37,6 @@ const termSchema = z.object({
     credits_planned: z.number().describe("The total credits assigned to this term."),
 });
 
-const planSchema = z.object({
-    terms: z.array(termSchema).describe("The chronological list of terms for the graduation plan."),
-});
-
 // ─── POST handler – add courses from a phase ────────────────────────────
 export async function POST(req: NextRequest) {
     const session = await getAgentSessionFromRequest(req);
@@ -39,6 +45,36 @@ export async function POST(req: NextRequest) {
     }
     const jsonWithSession = (body: unknown, init?: ResponseInit) =>
         withRefreshedAgentSession(NextResponse.json(body, init), session);
+
+    let supabaseAdminForSessions: ReturnType<typeof getSupabaseAdminClient> | null = null;
+    try {
+        supabaseAdminForSessions = getSupabaseAdminClient();
+    } catch {
+        supabaseAdminForSessions = null;
+    }
+
+    const persistSessionState = async (stateToPersist: ScaffoldState): Promise<void> => {
+        if (!supabaseAdminForSessions) return;
+        try {
+            await saveSessionStateSnapshot({
+                supabaseAdmin: supabaseAdminForSessions,
+                userId: session.userId,
+                sessionId: stateToPersist.planId,
+                stateSnapshot: buildSessionSnapshotFromStoreState(stateToPersist),
+                createIfMissing: true,
+            });
+        } catch {
+            void captureServerEvent('session_sync_failed', 'warn', {
+                route: '/api/scaffold',
+                request: req,
+                distinctId: session.userId,
+                properties: {
+                    planId: stateToPersist.planId,
+                    source: 'scaffold_state_snapshot',
+                },
+            });
+        }
+    };
 
     if (heuristicsContext === null || examplesContext === null) {
         try {
@@ -57,6 +93,7 @@ export async function POST(req: NextRequest) {
         planId: string;
         phase: 'major' | 'minor' | 'genEd';
         courses: (ScaffoldCourse & { programName?: string })[];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         preferences?: { maxCreditsPerTerm?: number; minCreditsPerTerm?: number; genEdStrategy?: "prioritize" | "balance"; graduationPace?: "fast" | "sustainable" | "undecided"; studentType?: 'undergrad' | 'honors' | 'graduate' | 'grad'; anticipatedGraduation?: string; transcriptCourses?: any[] };
     };
 
@@ -65,6 +102,33 @@ export async function POST(req: NextRequest) {
     }
 
     let state = store.get(planId);
+
+    // Attempt state recovery if not in memory
+    if (!state && supabaseAdminForSessions) {
+        try {
+            const recoveredState = await loadStateFromSessionSnapshot({
+                supabaseAdmin: supabaseAdminForSessions,
+                userId: session.userId,
+                sessionId: planId,
+            });
+            if (recoveredState) {
+                if (!recoveredState.userId) {
+                    recoveredState.userId = session.userId;
+                }
+                store.set(planId, recoveredState);
+                state = recoveredState;
+                void captureServerEvent('scaffold_state_recovered_from_ai_session', 'info', {
+                    route: '/api/scaffold',
+                    request: req,
+                    distinctId: session.userId,
+                    properties: { planId, phase },
+                });
+            }
+        } catch {
+            // Ignore recovery errors and fallback to creating new state if necessary
+        }
+    }
+
     if (state?.userId && state.userId !== session.userId) {
         return jsonWithSession({ error: 'Forbidden: plan ownership mismatch.' }, { status: 403 });
     }
@@ -92,6 +156,7 @@ export async function POST(req: NextRequest) {
                         ? 'graduate'
                         : 'undergrad',
                 anticipatedGraduation: preferences?.anticipatedGraduation,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 transcriptCredits: preferences?.transcriptCourses?.reduce((sum: number, c: any) => sum + (c.credits || 0), 0) ?? 0,
             },
             phases: [],
@@ -100,6 +165,11 @@ export async function POST(req: NextRequest) {
             allCourses: [],
             selectedProgramIds: [],
         };
+        store.set(planId, state);
+    }
+
+    if (!state) {
+        return jsonWithSession({ error: 'Failed to initialize state' }, { status: 500 });
     }
 
     // Tag courses with source and program properties
@@ -153,7 +223,8 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
                             credits_planned: z.number().max(state.preferences.maxCreditsPerTerm + 3, `Wait! Too many credits! Max is ${state.preferences.maxCreditsPerTerm} credits / term. Regenerate plan with more spread out courses!`).describe("The total credits assigned to this term."),
                         })).describe("The chronological list of terms for the graduation plan. Make sure not to exceed max credits!"),
                     }),
-                    // @ts-ignore
+                    // @ts-expect-error Types out of sync for execute plan function
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     execute: async (plan: any) => {
                         const { terms } = plan;
                         const checkErrors: string[] = [];
@@ -205,7 +276,7 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
                             const currentMax = isHalfTerm ? Math.ceil(state.preferences.maxCreditsPerTerm / 2) : state.preferences.maxCreditsPerTerm;
 
                             // Combine the term's original courses with any overflow from the previous term
-                            let pool = [...overflowCourses, ...(termObj.courses as ScaffoldCourse[])];
+                            const pool = [...overflowCourses, ...(termObj.courses as ScaffoldCourse[])];
                             overflowCourses = [];
 
                             const approvedCourses: ScaffoldCourse[] = [];
@@ -254,6 +325,7 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
 
                         state!.terms = enforcedTerms;
                         store.set(planId, state!);
+                        await persistSessionState(state!);
 
                         return {
                             success: true,
@@ -281,8 +353,7 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
     }
 }
 
-// ─── GET handler – retrieve current scaffold ─────────────────────────────
-export const dynamic = 'force-dynamic';
+// ─── GET handler – return the current state ──────────────────────────────
 export async function GET(req: NextRequest) {
     const session = await getAgentSessionFromRequest(req);
     if (!session) {
@@ -291,27 +362,56 @@ export async function GET(req: NextRequest) {
     const jsonWithSession = (body: unknown, init?: ResponseInit) =>
         withRefreshedAgentSession(NextResponse.json(body, init), session);
 
-    const planId = req.nextUrl.searchParams.get('planId');
+    const { searchParams } = new URL(req.url);
+    const planId = searchParams.get('planId');
 
     if (!planId) {
-        return jsonWithSession({ error: 'planId is required' }, { status: 400 });
+        return jsonWithSession({ error: 'planId required' }, { status: 400 });
     }
 
-    const state = store.get(planId);
+    let state = store.get(planId);
+
+    // Attempt state recovery if not in memory
+    if (!state) {
+        let supabaseAdminForSessions: ReturnType<typeof getSupabaseAdminClient> | null = null;
+        try {
+            supabaseAdminForSessions = getSupabaseAdminClient();
+        } catch {
+            supabaseAdminForSessions = null;
+        }
+        if (supabaseAdminForSessions) {
+            try {
+                const recoveredState = await loadStateFromSessionSnapshot({
+                    supabaseAdmin: supabaseAdminForSessions,
+                    userId: session.userId,
+                    sessionId: planId,
+                });
+                if (recoveredState) {
+                    if (!recoveredState.userId) {
+                        recoveredState.userId = session.userId;
+                    }
+                    store.set(planId, recoveredState);
+                    state = recoveredState;
+                    void captureServerEvent('scaffold_state_recovered_from_ai_session_get', 'info', {
+                        route: '/api/scaffold',
+                        request: req,
+                        distinctId: session.userId,
+                        properties: { planId },
+                    });
+                }
+            } catch {
+                // Ignore recovery errors and fallback below
+            }
+        }
+    }
 
     if (!state) {
-        return jsonWithSession({ error: 'Plan not found' }, { status: 404 });
+        return jsonWithSession({ error: 'Scaffold not found' }, { status: 404 });
     }
+
     if (state.userId && state.userId !== session.userId) {
         return jsonWithSession({ error: 'Forbidden: plan ownership mismatch.' }, { status: 403 });
     }
 
-    return jsonWithSession({
-        planId: state.planId,
-        phases: state.phases,
-        totalCourses: state.allCourses.length,
-        scaffold: {
-            plan: state.terms,
-        },
-    });
+    return jsonWithSession(state);
 }

@@ -5,7 +5,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { store, ScaffoldCourse, ScaffoldState, StudentType } from '../store';
 import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
+import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerEvent } from '@/lib/posthogServer';
+import {
+    buildSessionSnapshotFromStoreState,
+    saveSessionStateSnapshot,
+} from '@/lib/aiSessions';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -517,6 +522,36 @@ export async function POST(req: Request) {
     if (!Array.isArray(state.milestones)) state.milestones = [];
     state.preferences.studentType = normalizeStudentType(state.preferences.studentType);
 
+    let supabaseAdminForSessions: ReturnType<typeof getSupabaseAdminClient> | null = null;
+    try {
+        supabaseAdminForSessions = getSupabaseAdminClient();
+    } catch {
+        supabaseAdminForSessions = null;
+    }
+
+    const persistSessionState = async (stateToPersist: ScaffoldState): Promise<void> => {
+        if (!supabaseAdminForSessions) return;
+        try {
+            await saveSessionStateSnapshot({
+                supabaseAdmin: supabaseAdminForSessions,
+                userId: session.userId,
+                sessionId: planId,
+                stateSnapshot: buildSessionSnapshotFromStoreState(stateToPersist),
+                createIfMissing: true,
+            });
+        } catch {
+            void captureServerEvent('session_sync_failed', 'warn', {
+                route: '/api/chat',
+                request: req,
+                distinctId: session.userId,
+                properties: {
+                    planId,
+                    source: 'chat_state_snapshot',
+                },
+            });
+        }
+    };
+
     const discoveredCourses: ScaffoldState['allCourses'] = [];
     const discoveredCompletedCourseCodes = new Set<string>();
     const discoveredProgramIds = new Set<string>();
@@ -640,6 +675,7 @@ export async function POST(req: Request) {
     }
     state.selectedProgramIds = Array.from(mergedProgramIds);
     store.set(planId, state);
+    void persistSessionState(state);
 
     const hydratedHeuristics = evaluatePlanHeuristics(state);
     const hasMilestoneConfiguration = hasMilestoneSelections || state.milestones.length > 0;
@@ -648,6 +684,11 @@ export async function POST(req: Request) {
     const result = streamText({
         model: openai('gpt-5-mini'),
         stopWhen: stepCountIs(20),
+        onStepFinish: async () => {
+            const liveState = store.get(planId);
+            if (!liveState) return;
+            await persistSessionState(liveState);
+        },
         prepareStep: ({ steps }) => {
             const hasPreferenceUpdateActivity = steps.some((step) => {
                 if (!isObject(step)) return false;

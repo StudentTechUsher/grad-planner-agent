@@ -62,11 +62,16 @@ Optional persistence config:
 - `AGENT_USER_COURSES_TABLE` (default: `user_courses`)
 - `AGENT_USER_COURSES_USER_COLUMN` (default: `user_id`)
 - `AGENT_USER_COURSES_COURSES_COLUMN` (default: `courses`)
+- `AI_SESSIONS_TABLE` (default: `ai_sessions`)
+- `AI_SESSIONS_RETENTION_DAYS` (default: `90`)
+- `AI_SESSIONS_MAX_PAYLOAD_BYTES` (default: `2000000`)
 
 ## New Auth Routes
 
 - `GET /auth/handoff` consumes one-time handoff token and issues `agent_session` cookie.
 - `GET /api/session/bootstrap` returns authenticated bootstrap context.
+- `POST /api/session/conversation/resolve` resolves or creates a persistent AI conversation session.
+- `PUT /api/session/conversation/[sessionId]` persists conversation transcript + snapshot state.
 - `GET /api/session/transcript-context` checks existing transcript courses for the authenticated user profile.
 - `POST /api/plan/finalize` validates plan heuristics, persists active plan, returns redirect URL.
   - Request body: `{ planId: string, planName?: string }`
