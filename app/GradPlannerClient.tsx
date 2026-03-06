@@ -128,7 +128,7 @@ export default function Home() {
   const [bootstrap, setBootstrap] = useState<BootstrapPayload["bootstrap"] | null>(null);
 
   // @ts-ignore
-  const { messages, sendMessage, status, addToolResult, addToolOutput } = useChat({
+  const { messages, sendMessage, status, error: chatStreamError, addToolResult, addToolOutput } = useChat({
     // @ts-ignore
     api: `/api/chat?planId=${planId}`,
     id: `chat-${planId}`,
@@ -219,6 +219,14 @@ export default function Home() {
   const [liveJson, setLiveJson] = useState<any>(null);
   const [transcriptCourses, setTranscriptCourses] = useState<any[]>([]);
   const [isPlanSound, setIsPlanSound] = useState(false);
+  const trailingPlanTerm = Array.isArray(liveJson?.plan) && liveJson.plan.length > 0
+    ? liveJson.plan[liveJson.plan.length - 1]
+    : null;
+  const hasEmptyTrailingTerm = !!trailingPlanTerm &&
+    Array.isArray(trailingPlanTerm.courses) &&
+    trailingPlanTerm.courses.length === 0;
+  const showContinueBuildBanner = !isLoading && hasEmptyTrailingTerm;
+  const showStreamErrorBanner = !isLoading && !!chatStreamError;
   const [showDevToolLog, setShowDevToolLog] = useState(false);
   const isDevBuild = process.env.NODE_ENV !== "production";
   const lastSyncedPayloadRef = useRef<string>("");
@@ -939,6 +947,39 @@ export default function Home() {
                 <div className="flex items-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm dark:border-violet-900/60 dark:bg-violet-950/20 shadow-sm text-violet-700 dark:text-violet-300">
                   <Loader2 size={16} className="animate-spin text-violet-500 dark:text-violet-400" />
                   <span>Agent is thinking in the Playground...</span>
+                </div>
+              </div>
+
+            )}
+            {showContinueBuildBanner && (
+              <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                  <Loader2 size={16} />
+                </div>
+                <div className="flex flex-col gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/20 shadow-sm">
+                  <span className="text-amber-800 dark:text-amber-300">The plan builder paused before finishing — an empty term was left in the Playground. Tap below to resume.</span>
+                  <button
+                    onClick={() => sendMessage({ text: "Please continue building the graduation plan. An empty term was left — clean it up and finish placing all remaining courses." })}
+                    className="self-start px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
+                  >
+                    Continue Building Plan
+                  </button>
+                </div>
+              </div>
+            )}
+            {showStreamErrorBanner && (
+              <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border border-red-200 dark:border-red-800/60">
+                  <Loader2 size={16} />
+                </div>
+                <div className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm dark:border-red-900/60 dark:bg-red-950/20 shadow-sm">
+                  <span className="text-red-800 dark:text-red-300">Something went wrong with the connection. Your progress is saved — you can pick up where you left off.</span>
+                  <button
+                    onClick={() => sendMessage({ text: "Please continue from where you left off." })}
+                    className="self-start px-4 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors"
+                  >
+                    Retry
+                  </button>
                 </div>
               </div>
             )}

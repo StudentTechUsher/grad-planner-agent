@@ -418,12 +418,27 @@ export async function POST(req: Request) {
     const result = streamText({
         model: openai('gpt-5-mini'),
         maxRetries: 2,
-        stopWhen: stepCountIs(12),
+        stopWhen: stepCountIs(16),
         onStepFinish: async () => {
             await persistSessionState(state);
         },
-        onFinish: async () => {
-            await persistSessionState(state);
+        onFinish: async ({ finishReason }) => {
+            const liveState = store.get(planId) ?? state;
+            const liveHeuristics = evaluatePlanHeuristics(liveState);
+            if (liveState.terms.length > 0 && !liveHeuristics.isPlanSound) {
+                void captureServerEvent('chat_build_incomplete_at_finish', 'warn', {
+                    route: '/api/chat',
+                    request: req,
+                    distinctId: session.userId,
+                    properties: {
+                        planId,
+                        finishReason,
+                        totalUnplanned: liveHeuristics.totalUnplanned,
+                        termCount: liveState.terms.length,
+                    },
+                });
+            }
+            await persistSessionState(liveState);
         },
         prepareStep: ({ steps }) => {
             const hasPreferenceUpdateActivity = steps.some((step) => {
