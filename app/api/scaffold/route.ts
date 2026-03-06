@@ -15,7 +15,7 @@ import {
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 10;
 
 let heuristicsContext: string | null = null;
 let examplesContext: string | null = null;// ─── In-memory scaffold state ──────────────────────────────────────────
@@ -140,6 +140,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!state) {
+        console.log('--- TEST LOG: creating new state ---');
         state = {
             planId,
             userId: session.userId,
@@ -169,6 +170,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!state) {
+        console.log('--- TEST LOG: Failed to initialize state ---');
         return jsonWithSession({ error: 'Failed to initialize state' }, { status: 500 });
     }
 
@@ -183,6 +185,7 @@ export async function POST(req: NextRequest) {
     state.phases.push(phase);
 
     // Leverage the AI SDK Background Agent to distribute courses
+    console.log('--- TEST LOG: before streamText ---');
     try {
         const result = streamText({
             model: openai('gpt-5-mini'),
@@ -344,6 +347,7 @@ ${state.preferences.anticipatedGraduation ? `3.7. Anticipated Graduation: The st
 
         return withRefreshedAgentSession(result.toUIMessageStreamResponse(), session);
     } catch (e) {
+        console.error('--- TEST LOG: Catch block error ---', e);
         void captureServerError('scaffold_generation_failed', e, {
             route: '/api/scaffold',
             request: req,

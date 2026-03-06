@@ -4,7 +4,8 @@ import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerError, captureServerEvent } from '@/lib/posthogServer';
 import { store } from '@/app/api/store';
 import { evaluatePlanHeuristics } from '@/app/api/chat/tools';
-import { loadStateFromSessionSnapshot } from '@/lib/aiSessions';
+import { loadStateFromSessionSnapshot, buildSessionSnapshotFromStoreState, saveSessionStateSnapshot } from '@/lib/aiSessions';
+import { hydrateStateFromMessages } from '@/app/api/chat/hydrate';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -12,6 +13,7 @@ export const runtime = 'nodejs';
 type FinalizeBody = {
   planId?: string;
   planName?: string;
+  messages?: unknown[];
 };
 
 type BootstrapIdentity = {
@@ -468,6 +470,39 @@ export async function POST(req: Request) {
       // Non-blocking fallback path. Existing 404 behavior remains if recovery fails.
     }
   }
+  // Third fallback: rebuild state from message history sent by the client.
+  // This handles cold-start scenarios where neither in-memory store nor Supabase
+  // has the state (e.g., Supabase write was interrupted by a function timeout).
+  if (!state) {
+    const clientMessages = Array.isArray((body as FinalizeBody).messages) ? (body as FinalizeBody).messages as unknown[] : [];
+    if (clientMessages.length > 0) {
+      try {
+        const rebuiltState = hydrateStateFromMessages(planId, session.userId, clientMessages);
+        store.set(planId, rebuiltState);
+        state = rebuiltState;
+
+        // Persist to Supabase so future requests don't need to repeat this
+        const supabaseAdmin = getSupabaseAdminClient();
+        await saveSessionStateSnapshot({
+          supabaseAdmin,
+          userId: session.userId,
+          sessionId: planId,
+          stateSnapshot: buildSessionSnapshotFromStoreState(rebuiltState),
+          createIfMissing: true,
+        }).catch(() => { /* non-blocking */ });
+
+        void captureServerEvent('finalize_state_recovered_from_messages', 'info', {
+          route: '/api/plan/finalize',
+          request: req,
+          distinctId: session.userId,
+          properties: { planId, messageCount: clientMessages.length },
+        });
+      } catch {
+        // Fall through to 404
+      }
+    }
+  }
+
   if (!state) {
     return jsonWithSession({ error: 'Plan state not found.' }, { status: 404 });
   }

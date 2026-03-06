@@ -4,7 +4,7 @@ import path from 'path';
 import { supabase } from '@/lib/supabase';
 import { generateText } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { store, ScaffoldMilestone, ScaffoldState } from '../store';
+import { ScaffoldMilestone, ScaffoldState } from '../store';
 
 export type HeuristicViolationType =
   | 'overMax'
@@ -419,8 +419,7 @@ export const evaluatePlanHeuristics = (state: ScaffoldState): PlanHeuristicsSumm
   };
 };
 
-export const getAgentTools = (planId: string) => {
-  const state = store.get(planId);
+export const getAgentTools = (state: ScaffoldState) => {
   const ensureCollections = (nextState: ScaffoldState): ScaffoldState => {
     if (!Array.isArray(nextState.terms)) nextState.terms = [];
     if (!Array.isArray(nextState.allCourses)) nextState.allCourses = [];
@@ -459,9 +458,7 @@ export const getAgentTools = (planId: string) => {
     milestoneName: string,
     targetTerm: string,
   ) => {
-    const nextStateRaw = store.get(planId);
-    const nextState = nextStateRaw ? ensureCollections(nextStateRaw) : null;
-    if (!nextState) return { error: 'Plan state not found.' as const };
+    const nextState = ensureCollections(state);
 
     const normalizedTargetTerm = targetTerm.trim();
     if (!normalizedTargetTerm) {
@@ -503,7 +500,6 @@ export const getAgentTools = (planId: string) => {
       afterTerm: normalizedTargetTerm,
     };
     nextState.milestones.push(milestone);
-    store.set(planId, nextState);
 
     return {
       success: true,
@@ -801,10 +797,7 @@ export const getAgentTools = (planId: string) => {
       description: 'Get the list of all courses the user has selected but not yet placed into a term in the playground. Also returns user preferences to help you plan.',
       inputSchema: z.object({}),
       execute: async () => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
-
+        state = ensureCollections(state);
         return {
           ...buildPlanningSnapshot(state),
           preferences: state.preferences
@@ -817,10 +810,7 @@ export const getAgentTools = (planId: string) => {
         termName: z.string().describe('e.g., "Fall 2026"'),
       }),
       execute: async ({ termName }: { termName: string }) => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
-
+        state = ensureCollections(state);
         const remaining = getRemainingCourses(state);
         if (remaining.length === 0) {
           return withPlanningSnapshot(state, {
@@ -843,7 +833,6 @@ export const getAgentTools = (planId: string) => {
         }
 
         state.terms.push({ term: termName, courses: [], credits_planned: 0 });
-        store.set(planId, state);
         return withPlanningSnapshot(state, {
           message: `Term ${termName} created successfully.`,
           needsHeuristicsRecheck: true,
@@ -856,10 +845,7 @@ export const getAgentTools = (planId: string) => {
         termName: z.string(),
       }),
       execute: async ({ termName }: { termName: string }) => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
-
+        state = ensureCollections(state);
         const term = state.terms.find((t: any) => t.term === termName);
         if (!term) {
           return withPlanningSnapshot(state, { message: `Term ${termName} not found.` });
@@ -879,7 +865,6 @@ export const getAgentTools = (planId: string) => {
         }
 
         state.terms = state.terms.filter((t: any) => t.term !== termName);
-        store.set(planId, state);
 
         return withPlanningSnapshot(state, {
           message: `Term ${termName} deleted.`,
@@ -901,10 +886,7 @@ export const getAgentTools = (planId: string) => {
         }))
       }),
       execute: async ({ termName, courses }: { termName: string, courses: any[] }) => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
-
+        state = ensureCollections(state);
         let term = state.terms.find((t: any) => t.term === termName);
         if (!term) {
           term = { term: termName, courses: [], credits_planned: 0 };
@@ -913,7 +895,6 @@ export const getAgentTools = (planId: string) => {
 
         term.courses.push(...courses);
         term.credits_planned = term.courses.reduce((sum: number, c: any) => sum + (c.credits || 0), 0);
-        store.set(planId, state);
 
         // Automatic heuristics check
         const { currentMax } = getTermCreditLimits(termName, state.preferences);
@@ -937,17 +918,13 @@ export const getAgentTools = (planId: string) => {
         courseCode: z.string()
       }),
       execute: async ({ termName, courseCode }: { termName: string, courseCode: string }) => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
-
+        state = ensureCollections(state);
         const term = state.terms.find((t: any) => t.term === termName);
         if (!term) return withPlanningSnapshot(state, { error: `Term ${termName} not found.` });
 
         const initialLen = term.courses.length;
         term.courses = term.courses.filter((c: any) => c.code !== courseCode);
         term.credits_planned = term.courses.reduce((sum: number, c: any) => sum + (c.credits || 0), 0);
-        store.set(planId, state);
 
         if (term.courses.length < initialLen) {
           return withPlanningSnapshot(state, {
@@ -963,9 +940,7 @@ export const getAgentTools = (planId: string) => {
       description: 'Analyze the current graduation plan for any constraint violations (e.g., exceeding max credits).',
       inputSchema: z.object({}),
       execute: async () => {
-        const rawState = store.get(planId);
-        let state = rawState ? ensureCollections(rawState) : null;
-        if (!state) return { error: 'Plan state not found.' };
+        state = ensureCollections(state);
         const heuristics = evaluatePlanHeuristics(state);
         return {
           ...heuristics,

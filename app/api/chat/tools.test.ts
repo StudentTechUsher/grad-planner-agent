@@ -336,7 +336,7 @@ describe('playground mutation tools', () => {
     });
     const planId = seedStore(state);
 
-    const tools = getAgentTools(planId);
+    const tools = getAgentTools(state);
     if (!tools.deleteTerm.execute) throw new Error('deleteTerm must have execute');
     const result = await tools.deleteTerm.execute({ termName: 'Fall 2026' });
 
@@ -352,7 +352,7 @@ describe('playground mutation tools', () => {
     });
     const planId = seedStore(state);
 
-    const tools = getAgentTools(planId);
+    const tools = getAgentTools(state);
     if (!tools.addCoursesToTerm.execute) throw new Error('addCoursesToTerm must have execute');
     const result = await tools.addCoursesToTerm.execute({
       termName: 'Fall 2026',
@@ -369,7 +369,7 @@ describe('playground mutation tools', () => {
       allCourses: [mkCourse('IS 101', 3), mkCourse('IS 201', 3)],
     });
     const planId = seedStore(state);
-    const tools = getAgentTools(planId);
+    const tools = getAgentTools(state);
     if (!tools.createTerm.execute) throw new Error('createTerm must have execute');
     if (!tools.removeCourseFromTerm.execute) throw new Error('removeCourseFromTerm must have execute');
     if (!tools.deleteTerm.execute) throw new Error('deleteTerm must have execute');
@@ -389,7 +389,7 @@ describe('playground mutation tools', () => {
       allCourses: [mkCourse('IS 101', 3)],
     });
     const planId = seedStore(state);
-    const tools = getAgentTools(planId);
+    const tools = getAgentTools(state);
     if (!tools.createTerm.execute) throw new Error('createTerm must have execute');
 
     const result = await tools.createTerm.execute({ termName: 'Winter 2027' });
@@ -406,7 +406,7 @@ describe('playground mutation tools', () => {
       milestones: [],
     });
     const planId = seedStore(state);
-    const tools = getAgentTools(planId);
+    const tools = getAgentTools(state);
     if (!tools.insertMilestone.execute) throw new Error('insertMilestone must have execute');
 
     const result = await tools.insertMilestone.execute({

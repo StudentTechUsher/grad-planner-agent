@@ -1124,7 +1124,7 @@ function ToolInvocationCard({ tool, addToolOutput, sendMessage, planId, isLog = 
       return <TranscriptUploadForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} />;
     }
     if (!isComplete && tool.toolName === "requestPlanReview") {
-      return <PlanReviewForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} planId={planId} />;
+      return <PlanReviewForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} planId={planId} messages={messages} />;
     }
     if (!isComplete && tool.toolName === "addMilestones") {
       return <MilestonesForm tool={tool} addToolOutput={addToolOutput} sendMessage={sendMessage} liveJson={liveJson} />;
@@ -1747,7 +1747,7 @@ function TranscriptUploadForm({ tool, addToolOutput, sendMessage }: { tool: any,
   );
 }
 
-function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson, planId }: { tool: any, addToolOutput: any, sendMessage: any, liveJson: any, planId: string }) {
+function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson, planId, messages }: { tool: any, addToolOutput: any, sendMessage: any, liveJson: any, planId: string, messages?: any[] }) {
   const [feedback, setFeedback] = useState("");
   const [isIterating, setIsIterating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -1772,7 +1772,7 @@ function PlanReviewForm({ tool, addToolOutput, sendMessage, liveJson, planId }: 
       const res = await fetch("/api/plan/finalize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId, planName: trimmedPlanName }),
+        body: JSON.stringify({ planId, planName: trimmedPlanName, messages }),
       });
       const data = await res.json();
       if (!res.ok) {
