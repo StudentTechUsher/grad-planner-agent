@@ -20,7 +20,7 @@ import {
 export const maxDuration = 10;
 export const dynamic = 'force-dynamic';
 
-type AgentToolName = keyof ReturnType<typeof getAgentTools<ScaffoldState>>;
+type AgentToolName = keyof ReturnType<typeof getAgentTools>;
 
 const EDIT_TOOL_NAMES = new Set([
     'createTerm',
