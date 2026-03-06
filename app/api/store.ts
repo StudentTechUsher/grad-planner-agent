@@ -59,13 +59,3 @@ if (!globalWithGradStore.gradStore) {
 }
 
 export const store = globalStore;
-
-// Cleanup old scaffolds after 2 hours
-if (typeof setInterval !== 'undefined') {
-    setInterval(() => {
-        const cutoff = Date.now() - 2 * 60 * 60 * 1000;
-        for (const [id, state] of store) {
-            if (state.createdAt < cutoff) store.delete(id);
-        }
-    }, 10 * 60 * 1000);
-}

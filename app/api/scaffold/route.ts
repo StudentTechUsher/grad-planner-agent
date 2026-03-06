@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { streamText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
-import fs from 'fs/promises';
-import path from 'path';
 import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerError, captureServerEvent } from '@/lib/posthogServer';
@@ -15,10 +13,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 10;
+export const maxDuration = 60;
 
-let heuristicsContext: string | null = null;
-let examplesContext: string | null = null;// ─── In-memory scaffold state ──────────────────────────────────────────
+const heuristicsContext = '';
+const examplesContext = '';// ─── In-memory scaffold state ──────────────────────────────────────────
 // Each plan has a planId (UUID generated client-side) and an evolving scaffold.
 // Phases: major → minor → genEd → transcript
 // Each phase adds courses into the term plan.
@@ -76,18 +74,6 @@ export async function POST(req: NextRequest) {
         }
     };
 
-    if (heuristicsContext === null || examplesContext === null) {
-        try {
-            const rawHeuristics = await fs.readFile(path.join(process.cwd(), 'grad-planner-heuristics.md'), 'utf-8');
-            heuristicsContext = '\n\n' + rawHeuristics;
-
-            const rawExamples = await fs.readFile(path.join(process.cwd(), 'grad-planner-examples.md'), 'utf-8');
-            examplesContext = '\n\n' + rawExamples;
-        } catch {
-            heuristicsContext = '';
-            examplesContext = '';
-        }
-    }
     const body = await req.json();
     const { planId, phase, courses, preferences } = body as {
         planId: string;
@@ -189,6 +175,7 @@ export async function POST(req: NextRequest) {
     try {
         const result = streamText({
             model: openai('gpt-5-mini'),
+            maxRetries: 2,
             system: `You are a university academic graduation planner. Your job is to take a student's existing graduation plan and intelligently distribute NEW courses into it.
 CRITICAL RULES:
 1. You MUST include ALL existing courses in their exact terms. DO NOT remove or modify any existing courses.

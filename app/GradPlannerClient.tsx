@@ -133,9 +133,19 @@ export default function Home() {
     api: `/api/chat?planId=${planId}`,
     id: `chat-${planId}`,
     messages: initialChatMessages,
+    onError: (error) => {
+      console.error('[chat] stream error:', error);
+    },
   });
   // @ts-ignore
-  const scaffoldChat = useChat({ api: '/api/scaffold', id: `scaffold-${planId}` });
+  const scaffoldChat = useChat({
+    // @ts-ignore
+    api: '/api/scaffold',
+    id: `scaffold-${planId}`,
+    onError: (error) => {
+      console.error('[scaffold] stream error:', error);
+    },
+  });
   const [input, setInput] = useState("");
   const isLoading = status === "submitted" || status === "streaming";
 

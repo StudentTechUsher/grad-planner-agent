@@ -6,9 +6,8 @@ import {
     extractToolInvocations,
     normalizeMilestones,
 } from './hydrate';
-import fs from 'fs/promises';
-import path from 'path';
 import { store, ScaffoldState } from '../store';
+import byuContextRaw from '../../../byu-context.json';
 import { getAgentSessionFromRequest, withRefreshedAgentSession } from '@/lib/agentAuth';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { captureServerEvent } from '@/lib/posthogServer';
@@ -17,7 +16,7 @@ import {
     saveSessionStateSnapshot,
 } from '@/lib/aiSessions';
 
-export const maxDuration = 10;
+export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
 type AgentToolName = keyof ReturnType<typeof getAgentTools>;
@@ -284,8 +283,7 @@ const getRecentEditSnapshots = (
 const hasRequiredMilestone = (milestones: ScaffoldState['milestones']): boolean =>
     milestones.some((milestone) => milestone.title.toLowerCase() === REQUIRED_MILESTONE_NAME.toLowerCase());
 
-// Load BYU institutional context lazily
-let byuContext: string | null = null;
+const byuContext = '\n\nINSTITUTION CONTEXT (BYU-specific rules — follow these strictly):\n' + JSON.stringify(byuContextRaw);
 
 export async function POST(req: Request) {
     const session = await getAgentSessionFromRequest(req);
@@ -294,15 +292,6 @@ export async function POST(req: Request) {
     }
     const jsonWithSession = (body: unknown, init?: ResponseInit) =>
         withRefreshedAgentSession(Response.json(body, init), session);
-
-    if (byuContext === null) {
-        try {
-            const raw = await fs.readFile(path.join(process.cwd(), 'byu-context.json'), 'utf-8');
-            byuContext = '\n\nINSTITUTION CONTEXT (BYU-specific rules — follow these strictly):\n' + raw;
-        } catch {
-            byuContext = ''; // File not found — continue without it
-        }
-    }
 
     const body = await req.json();
     const url = new URL(req.url);
@@ -428,7 +417,8 @@ export async function POST(req: Request) {
 
     const result = streamText({
         model: openai('gpt-5-mini'),
-        stopWhen: stepCountIs(20),
+        maxRetries: 2,
+        stopWhen: stepCountIs(12),
         onStepFinish: async () => {
             await persistSessionState(state);
         },
