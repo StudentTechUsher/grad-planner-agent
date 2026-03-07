@@ -634,7 +634,7 @@ export const getAgentTools = (state: ScaffoldState) => {
       execute: async ({ programType, userContext }: { programType: string, userContext: string }) => {
         // Step 1: Use gpt-5 to generate 3 diverse search keywords
         const keywordsResult = await generateText({
-          model: openai('gpt-5'),
+          model: openai.chat('gpt-5'),
           prompt: `Based on this student profile, generate exactly 3 diverse one-word search keywords to find matching university ${programType} programs. Each keyword should target a different angle of their interests.\n\nStudent profile: ${userContext}\n\nRespond with ONLY 3 keywords separated by commas, nothing else. Example: "computer,business,data"`,
         });
 
@@ -671,7 +671,7 @@ export const getAgentTools = (state: ScaffoldState) => {
         }
 
         const pickResult = await generateText({
-          model: openai('gpt-5'),
+          model: openai.chat('gpt-5'),
           prompt: `A student described themselves as: ${userContext}\n\nHere are available university programs found via description search:\n${uniquePrograms.map(p => `- ${p.name} (${p.minimum_credits}–${p.target_total_credits} credits)${p.program_description ? `\n  Description: ${p.program_description}` : ''}`).join('\n')}\n\nPick exactly 3 programs that best fit this student. For each, provide the EXACT program name and a 1-sentence reason.\n\nRespond in this exact JSON format (no markdown, no code fences):\n[{"name": "exact name", "reason": "why it fits"}, ...]`,
         });
 
@@ -875,7 +875,7 @@ export const getAgentTools = (state: ScaffoldState) => {
           `8. You MUST call the 'submitPlan' tool to submit the COMPLETE merged plan. DO NOT output plain text only.`;
 
         const { toolCalls } = await generateText({
-          model: openai('gpt-5-mini'),
+          model: openai.chat('gpt-5-mini'),
           maxRetries: 2,
           system: systemPrompt,
           prompt: `EXISTING PLAN:\n${existingPlanJson}\n\nNEW COURSES TO DISTRIBUTE:\n${coursesToPlaceJson}`,

@@ -418,7 +418,7 @@ export async function POST(req: Request) {
     const isBuildPhaseActive = hasGenEdSelections || state.terms.length > 0 || state.milestones.length > 0;
 
     const result = streamText({
-        model: openai('gpt-5-mini'),
+        model: openai.chat('gpt-5-mini'),
         maxRetries: 2,
         stopWhen: stepCountIs(16),
         onStepFinish: async ({ toolCalls, toolResults, finishReason, usage }) => {

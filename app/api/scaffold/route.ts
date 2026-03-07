@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
     console.log('--- TEST LOG: before streamText ---');
     try {
         const result = streamText({
-            model: openai('gpt-5-mini'),
+            model: openai.chat('gpt-5-mini'),
             maxRetries: 2,
             system: `You are a university academic graduation planner. Your job is to take a student's existing graduation plan and intelligently distribute NEW courses into it.
 CRITICAL RULES:
