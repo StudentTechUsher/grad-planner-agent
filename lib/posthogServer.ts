@@ -94,16 +94,36 @@ export const captureServerEvent = async (
   }
 };
 
+const safeErrorStack = (error: unknown): string | undefined => {
+  if (error instanceof Error && error.stack) return error.stack.slice(0, 2000);
+  return undefined;
+};
+
+const safeErrorName = (error: unknown): string | undefined => {
+  if (error instanceof Error) return error.name;
+  return undefined;
+};
+
 export const captureServerError = async (
   event: string,
   error: unknown,
   context: CaptureContext = {},
-): Promise<void> =>
-  captureServerEvent(event, 'error', {
+): Promise<void> => {
+  const errorMessage = safeErrorMessage(error);
+  const errorStack = safeErrorStack(error);
+  const errorName = safeErrorName(error);
+
+  // Always log to console so Vercel function logs capture it regardless of PostHog config.
+  console.error(`[${event}]`, errorName ?? 'Error', errorMessage, errorStack ?? '');
+
+  return captureServerEvent(event, 'error', {
     ...context,
     properties: {
       ...context.properties,
-      errorMessage: safeErrorMessage(error),
+      errorMessage,
+      errorName,
+      errorStack,
     },
   });
+};
 

@@ -2,9 +2,9 @@ import { z } from 'zod';
 import fs from 'fs/promises';
 import path from 'path';
 import { supabase } from '@/lib/supabase';
-import { generateText } from 'ai';
+import { generateText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { ScaffoldMilestone, ScaffoldState } from '../store';
+import { ScaffoldMilestone, ScaffoldState, ScaffoldCourse, ScaffoldTerm } from '../store';
 
 export type HeuristicViolationType =
   | 'overMax'
@@ -419,6 +419,27 @@ export const evaluatePlanHeuristics = (state: ScaffoldState): PlanHeuristicsSumm
   };
 };
 
+const getNextTermForPlan = (currentTerm: string, pace: string): string => {
+  const parts = currentTerm.trim().split(' ');
+  let sem = parts[0];
+  let year = parseInt(parts[1]) || new Date().getFullYear();
+
+  if (pace === 'sustainable') {
+    if (sem.toLowerCase() === 'fall') { sem = 'Winter'; year += 1; }
+    else if (sem.toLowerCase() === 'winter') { sem = 'Fall'; }
+    else if (sem.toLowerCase() === 'spring') { sem = 'Summer'; }
+    else { sem = 'Fall'; }
+    return `${sem} ${year}`;
+  }
+
+  // Fast and undecided use full term sequence
+  if (sem.toLowerCase() === 'fall') { sem = 'Winter'; year += 1; }
+  else if (sem.toLowerCase() === 'winter') sem = 'Spring';
+  else if (sem.toLowerCase() === 'spring') sem = 'Summer';
+  else sem = 'Fall';
+  return `${sem} ${year}`;
+};
+
 export const getAgentTools = (state: ScaffoldState) => {
   const ensureCollections = (nextState: ScaffoldState): ScaffoldState => {
     if (!Array.isArray(nextState.terms)) nextState.terms = [];
@@ -793,6 +814,171 @@ export const getAgentTools = (state: ScaffoldState) => {
     },
 
     // PLAYGROUND TOOLS
+    generatePlan: {
+      description: 'Distribute ALL remaining unplanned courses into terms in one step using AI. Call this ONCE at the start of STEP 8 to build the full graduation plan at once, then call checkPlanHeuristics.',
+      inputSchema: z.object({}),
+      execute: async () => {
+        state = ensureCollections(state);
+        const remainingCourses = getRemainingCourses(state);
+
+        if (remainingCourses.length === 0) {
+          return withPlanningSnapshot(state, {
+            message: 'All courses are already planned. Proceed to checkPlanHeuristics.',
+          });
+        }
+
+        const planId = state.planId;
+        console.log('[generatePlan:start]', JSON.stringify({
+          planId,
+          allCoursesCount: state.allCourses.length,
+          remainingCount: remainingCourses.length,
+          existingTermCount: state.terms.length,
+          preferences: {
+            maxCreditsPerTerm: state.preferences.maxCreditsPerTerm,
+            graduationPace: state.preferences.graduationPace,
+            genEdStrategy: state.preferences.genEdStrategy,
+          },
+        }));
+
+        try {
+
+        const prefs = state.preferences;
+        const maxCredits = prefs.maxCreditsPerTerm;
+        const minCredits = prefs.minCreditsPerTerm;
+        const transcriptCredits = (prefs as any).transcriptCredits ?? 0;
+        const avgCredits = (maxCredits + minCredits) / 2;
+        const remainingCredits = remainingCourses.reduce((s, c) => s + (c.credits || 0), 0);
+        const estimatedTerms = Math.ceil(Math.max(remainingCredits / avgCredits, 1));
+        const existingPlanJson = state.terms.length > 0 ? JSON.stringify(state.terms, null, 2) : '[]';
+        const coursesToPlaceJson = JSON.stringify(remainingCourses, null, 2);
+
+        const systemPrompt =
+          `You are a university academic graduation planner. Your job is to take a student's existing graduation plan and intelligently distribute NEW courses into it.\n` +
+          `CRITICAL RULES:\n` +
+          `1. You MUST include ALL existing courses in their exact terms. DO NOT remove or modify any existing courses.\n` +
+          `2. Distribute the new courses into the plan, balancing the workload.\n` +
+          `3. EXTREMELY STRICT: The student's preferences dictate a maximum of ${maxCredits} credits per term. You MUST NOT exceed this limit under ANY circumstances!\n` +
+          `3.5. General Education Strategy: ${prefs.genEdStrategy === 'prioritize' ? 'Push all Gen Ed courses to the earliest possible terms.' : 'Distribute Gen Ed courses evenly across the entire graduation plan.'}\n` +
+          `3.6. Graduation Pace & Credit Targeting:\n` +
+          `- If graduation pace is 'fast' (ASAP): Use EVERY available term in sequence (Fall, Winter, Spring, Summer) until graduation. Do not skip Spring/Summer when courses remain.\n` +
+          `- If graduation pace is 'sustainable': Prioritize Fall/Winter as primary terms. Only use Spring/Summer at the END of the plan when it helps avoid waiting until the next school year.\n` +
+          `- If graduation pace is 'undecided': Do not schedule Spring/Summer (8-week) terms until a major is decided.\n` +
+          `3.6.5 Gen Ed Placeholders: You MUST actively invent and insert "Gen Ed Placeholder" courses (3 credits, code "GE 000", source 'genEd') depending on the gen-ed strategy:\n` +
+          `- 'prioritize': Put 2-3 Gen Ed placeholders in the earliest terms.\n` +
+          `- 'balance': Put about 1 Gen Ed placeholder in each primary term.\n` +
+          `- If pace is 'undecided', keep placeholders in Fall/Winter first.\n` +
+          (prefs.anticipatedGraduation ? `3.7. Anticipated Graduation: The student wants to graduate around ${prefs.anticipatedGraduation}. Try to hit this target if credit constraints allow.\n` : '') +
+          `4. The sequence of terms at BYU is Fall, Winter, Spring, Summer. Standard Fall/Winter term load is ${minCredits}-${maxCredits} credits. Spring/Summer is half-term (max ${Math.ceil(maxCredits / 2)} credits).\n` +
+          `5. If an existing term has room below the max credits, you can add new courses to it.\n` +
+          `6. CALCULATING SEMESTERS: You need to fit approximately ${remainingCredits} more credits. If you average ${avgCredits} credits per term, you need around ${estimatedTerms} terms. Generate enough terms to keep every term below ${maxCredits} credits.\n` +
+          `7. YOU MUST GENERATE ENOUGH TERMS TO KEEP EVERY TERM BELOW ${maxCredits} CREDITS! Add as many new semesters as necessary.\n` +
+          `8. You MUST call the 'submitPlan' tool to submit the COMPLETE merged plan. DO NOT output plain text only.`;
+
+        const { toolCalls } = await generateText({
+          model: openai('gpt-5-mini'),
+          maxRetries: 2,
+          system: systemPrompt,
+          prompt: `EXISTING PLAN:\n${existingPlanJson}\n\nNEW COURSES TO DISTRIBUTE:\n${coursesToPlaceJson}`,
+          tools: {
+            submitPlan: tool({
+              description: 'Submit the complete graduation plan with all courses distributed into terms.',
+              parameters: z.object({
+                terms: z.array(z.object({
+                  term: z.string(),
+                  courses: z.array(z.object({
+                    code: z.string(),
+                    title: z.string(),
+                    credits: z.number(),
+                    source: z.enum(['major', 'minor', 'genEd', 'placeholder']),
+                    prerequisite: z.string().optional(),
+                    requirementId: z.string().optional(),
+                  })),
+                  credits_planned: z.number(),
+                })),
+              }),
+              // @ts-expect-error execute parameter inference out of sync with zod schema
+              execute: async (input: any) => input,
+            }),
+          },
+          toolChoice: 'required',
+        });
+
+        const submitCall = toolCalls.find((tc) => tc.toolName === 'submitPlan');
+        const llmTerms: ScaffoldTerm[] = Array.isArray((submitCall?.input as any)?.terms)
+          ? (submitCall!.input as any).terms
+          : [];
+
+        // Apply credit enforcement loop (same algorithm as scaffold route)
+        const pace = prefs.graduationPace;
+        const enforcedTerms: ScaffoldTerm[] = [];
+        let overflowCourses: ScaffoldCourse[] = [];
+        let i = 0;
+        let currentTermStr = llmTerms[0]?.term || 'Fall 2026';
+
+        while (i < llmTerms.length || overflowCourses.length > 0) {
+          const termObj = llmTerms[i] || { term: currentTermStr, courses: [] };
+          currentTermStr = termObj.term;
+
+          const termIsHalf = currentTermStr.toLowerCase().includes('spring') || currentTermStr.toLowerCase().includes('summer');
+          const currentMax = termIsHalf ? Math.ceil(maxCredits / 2) : maxCredits;
+
+          const pool = [...overflowCourses, ...(termObj.courses as ScaffoldCourse[])];
+          overflowCourses = [];
+          const approvedCourses: ScaffoldCourse[] = [];
+          let termCredits = 0;
+
+          for (const course of pool) {
+            if (termCredits + (course.credits || 0) <= currentMax || approvedCourses.length === 0) {
+              approvedCourses.push(course);
+              termCredits += (course.credits || 0);
+            } else {
+              overflowCourses.push(course);
+            }
+          }
+
+          if (approvedCourses.length > 0) {
+            enforcedTerms.push({
+              term: currentTermStr,
+              courses: approvedCourses,
+              credits_planned: termCredits,
+            });
+          }
+
+          currentTermStr = getNextTermForPlan(currentTermStr, pace);
+          i++;
+        }
+
+          state.terms = enforcedTerms;
+          const remaining = getRemainingCourses(state);
+
+          console.log('[generatePlan:done]', JSON.stringify({
+            planId,
+            termCount: state.terms.length,
+            totalUnplanned: remaining.length,
+            llmTermsReceived: llmTerms.length,
+          }));
+
+          return {
+            plan: state.terms,
+            milestones: state.milestones,
+            totalUnplanned: remaining.length,
+            termCount: state.terms.length,
+            message: `Generated plan with ${state.terms.length} term(s). ${remaining.length} course(s) unplanned.`,
+          };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          const stack = err instanceof Error ? err.stack?.slice(0, 2000) : undefined;
+          console.error('[generatePlan:error]', JSON.stringify({ planId, message, stack }));
+          return {
+            error: `generatePlan failed: ${message}`,
+            plan: state.terms,
+            milestones: state.milestones,
+            totalUnplanned: remainingCourses.length,
+            termCount: state.terms.length,
+          };
+        }
+      },
+    },
     getRemainingCoursesToPlan: {
       description: 'Get the list of all courses the user has selected but not yet placed into a term in the playground. Also returns user preferences to help you plan.',
       inputSchema: z.object({}),

@@ -153,6 +153,55 @@ export default function Home() {
     setInput(e.target.value);
   };
 
+  const resolveAllPendingToolCalls = (reason: string) => {
+    for (const msg of messages as any[]) {
+      if (Array.isArray(msg?.toolInvocations)) {
+        for (const tool of msg.toolInvocations) {
+          const toolCallId = typeof tool?.toolCallId === "string" ? tool.toolCallId : "";
+          if (!toolCallId) continue;
+          const hasResult =
+            tool?.state === "result" ||
+            tool?.state === "output-available" ||
+            tool?.result !== undefined ||
+            tool?.output !== undefined;
+          if (hasResult) continue;
+          const toolName = typeof tool?.toolName === "string" && tool.toolName.length > 0 ? tool.toolName : "unknown";
+          try {
+            // @ts-ignore
+            if (addToolResult) addToolResult({ toolCallId, result: { action: reason } });
+            // @ts-ignore
+            else if (addToolOutput) addToolOutput({ tool: toolName, toolCallId, output: { action: reason } });
+          } catch (_err) { }
+        }
+      }
+
+      if (Array.isArray(msg?.parts)) {
+        for (const part of msg.parts) {
+          const type = typeof part?.type === "string" ? part.type : "";
+          if (!type.startsWith("tool-") && type !== "tool-call") continue;
+          const toolCallId = typeof part?.toolCallId === "string" ? part.toolCallId : "";
+          if (!toolCallId) continue;
+          const hasResult =
+            part?.state === "result" ||
+            part?.state === "output-available" ||
+            part?.result !== undefined ||
+            part?.output !== undefined;
+          if (hasResult) continue;
+          const toolName =
+            typeof part?.toolName === "string" && part.toolName.length > 0
+              ? part.toolName
+              : type.replace("tool-", "") || "unknown";
+          try {
+            // @ts-ignore
+            if (addToolResult) addToolResult({ toolCallId, result: { action: reason } });
+            // @ts-ignore
+            else if (addToolOutput) addToolOutput({ tool: toolName, toolCallId, output: { action: reason } });
+          } catch (_err) { }
+        }
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement> | React.KeyboardEvent<HTMLTextAreaElement>) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -578,7 +627,7 @@ export default function Home() {
             setLiveJson(tool.result.scaffold);
           }
 
-          if (['createTerm', 'deleteTerm', 'addCoursesToTerm', 'removeCourseFromTerm'].includes(tool.toolName) && tool.state === "result" && tool.result?.plan) {
+          if (['generatePlan', 'createTerm', 'deleteTerm', 'addCoursesToTerm', 'removeCourseFromTerm'].includes(tool.toolName) && tool.state === "result" && tool.result?.plan) {
             setLiveJson((prev: any) => ({
               ...(prev ?? {}),
               plan: tool.result.plan,
@@ -959,7 +1008,10 @@ export default function Home() {
                 <div className="flex flex-col gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm dark:border-amber-900/60 dark:bg-amber-950/20 shadow-sm">
                   <span className="text-amber-800 dark:text-amber-300">The plan builder paused before finishing — an empty term was left in the Playground. Tap below to resume.</span>
                   <button
-                    onClick={() => sendMessage({ text: "Please continue building the graduation plan. An empty term was left — clean it up and finish placing all remaining courses." })}
+                    onClick={() => {
+                      resolveAllPendingToolCalls("continue_build");
+                      sendMessage({ text: "Please continue building the graduation plan. An empty term was left — clean it up and finish placing all remaining courses." });
+                    }}
                     className="self-start px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
                   >
                     Continue Building Plan

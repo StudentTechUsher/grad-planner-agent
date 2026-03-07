@@ -34,6 +34,7 @@ const MILESTONE_INSERT_TOOL_NAMES = new Set([
 ]);
 
 const REPAIR_TOOL_NAMES = [
+    'generatePlan',
     'getRemainingCoursesToPlan',
     'createTerm',
     'deleteTerm',
@@ -64,6 +65,7 @@ const FINALIZATION_TOOL_NAMES = [
 
 const BUILD_TOOL_NAMES = new Set<string>([
     ...FINALIZATION_TOOL_NAMES,
+    'generatePlan',
 ]);
 
 type UIMessageToolInvocation = {
@@ -419,12 +421,58 @@ export async function POST(req: Request) {
         model: openai('gpt-5-mini'),
         maxRetries: 2,
         stopWhen: stepCountIs(16),
-        onStepFinish: async () => {
+        onStepFinish: async ({ toolCalls, toolResults, finishReason, usage }) => {
+            const toolNames = Array.isArray(toolCalls)
+                ? toolCalls.map((tc) => (typeof tc.toolName === 'string' ? tc.toolName : 'unknown'))
+                : [];
+            const toolErrors = Array.isArray(toolResults)
+                ? toolResults
+                    .filter((tr) => {
+                        if (typeof (tr as any).isError === 'boolean') return (tr as any).isError;
+                        const out = (tr as any).output ?? (tr as any).result;
+                        return typeof out === 'object' && out !== null && 'error' in out;
+                    })
+                    .map((tr) => ({
+                        toolName: (tr as any).toolName,
+                        error: (tr as any).output?.error ?? (tr as any).result?.error ?? 'unknown',
+                    }))
+                : [];
+
+            console.log('[chat:step]', JSON.stringify({
+                planId,
+                finishReason,
+                toolNames,
+                inputTokens: usage?.inputTokens,
+                outputTokens: usage?.outputTokens,
+                toolErrors: toolErrors.length > 0 ? toolErrors : undefined,
+            }));
+
+            if (toolErrors.length > 0) {
+                void captureServerEvent('chat_tool_error', 'error', {
+                    route: '/api/chat',
+                    request: req,
+                    distinctId: session.userId,
+                    properties: { planId, toolErrors },
+                });
+            }
+
             await persistSessionState(state);
         },
-        onFinish: async ({ finishReason }) => {
+        onFinish: async ({ finishReason, usage, steps }) => {
+            const stepCount = Array.isArray(steps) ? steps.length : 0;
             const liveState = store.get(planId) ?? state;
             const liveHeuristics = evaluatePlanHeuristics(liveState);
+
+            console.log('[chat:finish]', JSON.stringify({
+                planId,
+                finishReason,
+                stepCount,
+                totalTokens: (usage?.inputTokens ?? 0) + (usage?.outputTokens ?? 0),
+                isPlanSound: liveHeuristics.isPlanSound,
+                totalUnplanned: liveHeuristics.totalUnplanned,
+                termCount: liveState.terms.length,
+            }));
+
             if (liveState.terms.length > 0 && !liveHeuristics.isPlanSound) {
                 void captureServerEvent('chat_build_incomplete_at_finish', 'warn', {
                     route: '/api/chat',
@@ -433,12 +481,24 @@ export async function POST(req: Request) {
                     properties: {
                         planId,
                         finishReason,
+                        stepCount,
                         totalUnplanned: liveHeuristics.totalUnplanned,
                         termCount: liveState.terms.length,
                     },
                 });
             }
             await persistSessionState(liveState);
+        },
+        onError: async ({ error }) => {
+            const message = error instanceof Error ? error.message : String(error);
+            const stack = error instanceof Error ? error.stack?.slice(0, 2000) : undefined;
+            console.error('[chat:error]', JSON.stringify({ planId, message, stack }));
+            void captureServerEvent('chat_stream_error', 'error', {
+                route: '/api/chat',
+                request: req,
+                distinctId: session.userId,
+                properties: { planId, errorMessage: message, errorStack: stack },
+            });
         },
         prepareStep: ({ steps }) => {
             const hasPreferenceUpdateActivity = steps.some((step) => {
@@ -474,6 +534,22 @@ export async function POST(req: Request) {
 
             if (!isBuildPhaseActive && !hasBuildActivity) {
                 return {};
+            }
+
+            // Force generatePlan as the very first build action when courses exist but no terms yet
+            if (isBuildPhaseActive && !hasBuildActivity) {
+                const liveStateForGenPlan = store.get(planId) ?? state;
+                if (
+                    Array.isArray(liveStateForGenPlan.allCourses) &&
+                    liveStateForGenPlan.allCourses.length > 0 &&
+                    Array.isArray(liveStateForGenPlan.terms) &&
+                    liveStateForGenPlan.terms.length === 0
+                ) {
+                    return {
+                        activeTools: ['generatePlan'],
+                        toolChoice: 'required',
+                    };
+                }
             }
 
             // Always evaluate heuristics from current live store state to avoid stale
@@ -633,7 +709,7 @@ export async function POST(req: Request) {
             "STEP 5: If minors were selected, call selectMinorCourses sequentially (same array/index pattern) until all selected minors are completed. Distinguish skip outcomes: if result.action='change_minor', immediately call requestMinorSelection again; if result.action='skip_minor', continue as no-minor; other skipped outcomes may continue. " +
             "STEP 6: If studentType='honors', call requestHonorsSelection and wait for acknowledgment. " +
             "STEP 7: For non-graduate students, call selectGenEdCourses and wait for GE selections. " +
-            "STEP 8: Build the graduation plan visually in the Playground using `getRemainingCoursesToPlan`, `createTerm`, `addCoursesToTerm`, and `removeCourseFromTerm`. Do NOT use generateGradPlanScaffold. Pacing rules: if graduationPace='fast', use every term in sequence (Fall/Winter/Spring/Summer) with no skipped terms while courses remain; if graduationPace='sustainable', prefer Fall/Winter and only use Spring/Summer near the end to avoid waiting; if graduationPace='undecided', avoid Spring/Summer until a major is chosen. Run `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, perform minimal local fixes (move one course at a time; create the next chronological term only when needed), then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. If progress stalls (e.g., empty term created but unplanned courses remain), immediately call `getRemainingCoursesToPlan` and then place courses into an existing term or remove the empty term before creating any new term. " +
+            "STEP 8: Call `generatePlan` — this places ALL remaining courses into terms in one step. After it completes, call `checkPlanHeuristics`. If warnings exist or totalUnplanned > 0, use repair tools (`getRemainingCoursesToPlan`, `removeCourseFromTerm`, `addCoursesToTerm`, `deleteTerm`, `createTerm`) for minimal targeted fixes, then run `checkPlanHeuristics` again. Repeat until `isPlanSound=true` and `totalUnplanned=0`. " +
             "STEP 9: After STEP 8 is clean, call addMilestones and wait for user input. Then call insertMilestone for each selected milestone. `Apply For Graduation` is required and must be placed before the final semester. " +
             "STEP 10: Only after heuristics are clean, all selected courses are placed, and `Apply For Graduation` is inserted, call requestPlanReview. " +
             "   If the user wants to iterate, refine using tools then call requestPlanReview again. " +
