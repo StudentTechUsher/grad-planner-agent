@@ -5,8 +5,49 @@ Agentic graduation planner application.
 ## Local Development
 
 ```bash
-npm install
-npm run dev
+pnpm i
+pnpm run dev
+```
+
+## AWS EC2 (SDK Provisioning)
+
+This repo includes an AWS SDK script to launch a basic EC2 host (`t3.micro`) and optionally bootstrap this app.
+
+```bash
+pnpm run aws:provision:ec2
+```
+
+Minimum required environment variables:
+
+- `AWS_REGION` (or `AWS_DEFAULT_REGION`)
+- `EC2_KEY_NAME`
+
+Common optional environment variables:
+
+- `EC2_INSTANCE_TYPE` (default `t3.micro`)
+- `EC2_SSH_CIDR` (default `0.0.0.0/0`)
+- `EC2_APP_PORT` (default `3000`)
+- `EC2_APP_CIDR` (default `0.0.0.0/0`)
+- `APP_REPO_URL` (defaults to local `git remote.origin.url`)
+- `APP_REPO_REF` (defaults to local branch)
+- `APP_ENV_FILE` (path to local `.env`, auto base64-encoded into instance user-data)
+- `APP_ENV_B64` (base64 of `.env`, if you prefer to provide it directly)
+- `APP_SKIP_BUILD` (`true` skips `npm run build` and runs `npm run dev`)
+
+Example:
+
+```bash
+export AWS_REGION=us-west-2
+export EC2_KEY_NAME=my-ec2-key
+export EC2_SSH_CIDR=203.0.113.10/32
+export APP_ENV_FILE=.env
+pnpm run aws:provision:ec2
+```
+
+Dry run (prints resolved config without creating resources):
+
+```bash
+pnpm run aws:provision:ec2 -- --dry-run
 ```
 
 ## Environment Variables
